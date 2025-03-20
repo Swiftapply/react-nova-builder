@@ -89,11 +89,105 @@ export const parseReactNativeCode = (code: string) => {
       }
     }
     
+    // Identify app type based on keywords in the code or app name
+    const codeLower = code.toLowerCase();
+    const appNameLower = appName.toLowerCase();
+    
+    // Determine app color scheme
+    let primaryColor = '#4F46E5'; // Default indigo
+    let accentColor = '#34D399';  // Default green
+    
+    // Look for custom colors in the code
+    const styleColorMatches = code.match(/(?:primary|brand|main|theme)(?:Color)?\s*:\s*['"]?(#[0-9A-Fa-f]{6})['"]?/g);
+    if (styleColorMatches && styleColorMatches.length > 0) {
+      const colorMatch = styleColorMatches[0].match(/#[0-9A-Fa-f]{6}/);
+      if (colorMatch) {
+        primaryColor = colorMatch[0];
+      }
+    }
+    
+    const accentColorMatches = code.match(/(?:accent|secondary|highlight)(?:Color)?\s*:\s*['"]?(#[0-9A-Fa-f]{6})['"]?/g);
+    if (accentColorMatches && accentColorMatches.length > 0) {
+      const colorMatch = accentColorMatches[0].match(/#[0-9A-Fa-f]{6}/);
+      if (colorMatch) {
+        accentColor = colorMatch[0];
+      }
+    }
+    
+    // Check for UI patterns
+    const hasHeader = codeLower.includes('header') || codeLower.includes('appbar') || codeLower.includes('navbar');
+    const hasTabBar = codeLower.includes('tabbar') || codeLower.includes('bottombar') || codeLower.includes('tabnavigator');
+    const hasFAB = codeLower.includes('floatingactionbutton') || codeLower.includes('fab');
+    const hasSearchBar = codeLower.includes('search') && (codeLower.includes('input') || codeLower.includes('bar'));
+    const hasFlatList = codeLower.includes('flatlist') || codeLower.includes('scrollview') || codeLower.includes('map(');
+    const hasScrollView = codeLower.includes('scrollview') || codeLower.includes('scrollable') || hasFlatList;
+    const hasCard = codeLower.includes('card') || codeLower.includes('container') || codeLower.includes('box');
+    const hasDarkMode = codeLower.includes('darkmode') || codeLower.includes('darktheme') || codeLower.includes('theme');
+    const hasGradient = codeLower.includes('gradient') || codeLower.includes('lineargradient');
+    
+    // Determine app type based on content
+    const isTimerApp = 
+      codeLower.includes('timer') || 
+      codeLower.includes('countdown') || 
+      codeLower.includes('pomodoro') || 
+      appNameLower.includes('timer') || 
+      appNameLower.includes('pomodoro') || 
+      appNameLower.includes('focus');
+      
+    const isFinanceApp = 
+      codeLower.includes('finance') || 
+      codeLower.includes('money') || 
+      codeLower.includes('budget') || 
+      codeLower.includes('expense') || 
+      codeLower.includes('payment') || 
+      appNameLower.includes('pay') || 
+      appNameLower.includes('cash') || 
+      appNameLower.includes('wallet') || 
+      appNameLower.includes('money') || 
+      appNameLower.includes('finance');
+      
+    const isHealthApp = 
+      codeLower.includes('health') || 
+      codeLower.includes('fitness') || 
+      codeLower.includes('workout') || 
+      codeLower.includes('exercise') || 
+      codeLower.includes('steps') || 
+      codeLower.includes('calories') || 
+      appNameLower.includes('fit') || 
+      appNameLower.includes('health') || 
+      appNameLower.includes('workout');
+      
+    const isSocialApp = 
+      codeLower.includes('social') || 
+      codeLower.includes('post') || 
+      codeLower.includes('feed') || 
+      codeLower.includes('profile') || 
+      codeLower.includes('friend') || 
+      codeLower.includes('follow') || 
+      appNameLower.includes('social') || 
+      appNameLower.includes('chat') || 
+      appNameLower.includes('connect');
+    
     return {
       appName,
       screens,
       features,
-      code
+      code,
+      primaryColor,
+      accentColor,
+      isTimerApp,
+      isFinanceApp,
+      isHealthApp,
+      isSocialApp,
+      hasHeader,
+      hasTabBar,
+      hasFAB,
+      hasSearchBar,
+      hasFlatList,
+      hasScrollView,
+      hasCard,
+      hasDarkMode,
+      hasGradient
     };
   } catch (error) {
     console.error('Error parsing React Native code:', error);
