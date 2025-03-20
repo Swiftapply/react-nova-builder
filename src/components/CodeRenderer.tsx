@@ -1,10 +1,5 @@
 import React, { useMemo } from 'react';
 import { parseReactNativeCode } from '@/services/CodeParserService';
-import { TimerAppUI } from './code-renderer/TimerAppUI';
-import { FinanceAppUI } from './code-renderer/FinanceAppUI';
-import { HealthAppUI } from './code-renderer/HealthAppUI';
-import { SocialAppUI } from './code-renderer/SocialAppUI';
-import { DefaultAppUI } from './code-renderer/DefaultAppUI';
 import { StatusBar } from './code-renderer/StatusBar';
 import { NavigationBar } from './code-renderer/NavigationBar';
 import { SearchBar } from './code-renderer/SearchBar';
@@ -30,21 +25,34 @@ const CodeRenderer: React.FC<CodeRendererProps> = ({ code, platform }) => {
   }
   
   const renderAppContent = () => {
-    if (parsedUI.isTimerApp) {
-      return <TimerAppUI parsedUI={parsedUI} />;
-    } else if (parsedUI.isFinanceApp) {
-      return <FinanceAppUI parsedUI={parsedUI} />;
-    } else if (parsedUI.isHealthApp) {
-      return <HealthAppUI parsedUI={parsedUI} />;
-    } else if (parsedUI.isSocialApp) {
-      return <SocialAppUI parsedUI={parsedUI} />;
-    } else {
-      return <DefaultAppUI parsedUI={parsedUI} />;
-    }
+    // Simplified app content rendering based on app type
+    return (
+      <div className="px-4 py-3">
+        {parsedUI.appTitle && (
+          <h1 className="text-lg font-semibold mb-2" style={{ color: parsedUI.primaryTextColor || '#111' }}>
+            {parsedUI.appTitle}
+          </h1>
+        )}
+        
+        {parsedUI.description && (
+          <p className="text-sm mb-4" style={{ color: parsedUI.secondaryTextColor || '#555' }}>
+            {parsedUI.description}
+          </p>
+        )}
+        
+        {parsedUI.hasMainContent && (
+          <div className="bg-white/80 rounded-lg p-4 shadow-sm">
+            <div className="text-sm">
+              {parsedUI.mainContentText || 'App content will display here'}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden" style={{ 
+    <div className="flex flex-col h-full overflow-hidden" style={{
       backgroundColor: parsedUI.hasDarkMode ? '#18181B' : (parsedUI.isTimerApp ? '#FAFAFA' : 'white'),
       fontFamily: '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
@@ -59,11 +67,11 @@ const CodeRenderer: React.FC<CodeRendererProps> = ({ code, platform }) => {
         }}
       >
         {/* Add this to hide scrollbar in WebKit browsers */}
-        <style jsx>{`
+        <style dangerouslySetInnerHTML={{ __html: `
           div::-webkit-scrollbar {
             display: none;
           }
-        `}</style>
+        `}} />
         
         {/* Render gradient background if detected */}
         {parsedUI.hasGradient && (

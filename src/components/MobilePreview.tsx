@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Check, Smartphone, ExternalLink, Code, LayoutGrid } from 'lucide-react';
+import { Check, Smartphone, ExternalLink } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import QRCode from 'qrcode';
@@ -102,21 +102,21 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
   const generateScreenNames = () => {
     if (previewCode && previewCode.includes('pomodoro')) {
       return [
-        'Onboarding Screen', 'Login Screen', 'Sign Up Screen', 'Home Screen', 
-        'Task List Screen', 'Statistics Screen', 'Settings Screen', 'Profile Screen', 'Notification Screen'
+        'Onboarding Screen', 'Login Screen', 'Home Screen', 
+        'Task List Screen', 'Statistics Screen', 'Settings Screen'
       ];
     }
     
     if (previewCode && previewCode.includes('fitness')) {
       return [
         'Welcome Screen', 'Profile Setup', 'Dashboard', 'Workout Screen', 
-        'Exercise List', 'Progress Screen', 'Meal Planner', 'Settings'
+        'Exercise List', 'Progress Screen'
       ];
     }
     
     return [
       'Splash Screen', 'Login Screen', 'Home Screen', 'Detail Screen', 
-      'Profile Screen', 'Settings Screen', 'Notification Screen'
+      'Profile Screen', 'Settings Screen'
     ];
   };
 
@@ -135,62 +135,102 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
     }
   };
 
-  const demoFeatures = generateDemoFeatures(getAppNameFromCode());
+  // Get features that we've actually implemented
+  const getImplementedFeatures = () => {
+    if (!previewCode) return [];
+    
+    // Analyze the code to determine which features are actually implemented
+    const features: string[] = [];
+    
+    if (previewCode.includes('authentication') || previewCode.includes('login') || 
+        previewCode.includes('signin') || previewCode.includes('signup')) {
+      features.push('User Authentication');
+    }
+    
+    if (previewCode.includes('notification') || previewCode.includes('alert')) {
+      features.push('Push Notifications');
+    }
+    
+    if (previewCode.includes('fetch') || previewCode.includes('axios') || 
+        previewCode.includes('api.') || previewCode.includes('getData')) {
+      features.push('Data Synchronization');
+    }
+    
+    if (previewCode.includes('AsyncStorage') || previewCode.includes('localStorage') || 
+        previewCode.includes('saveData')) {
+      features.push('Offline Storage');
+    }
+    
+    if (previewCode.includes('camera') || previewCode.includes('image') || 
+        previewCode.includes('photo') || previewCode.includes('gallery')) {
+      features.push('Camera & Media');
+    }
+    
+    if (previewCode.includes('share') || previewCode.includes('social')) {
+      features.push('Social Sharing');
+    }
+    
+    if (previewCode.includes('map') || previewCode.includes('location') || 
+        previewCode.includes('coordinate')) {
+      features.push('Location Services');
+    }
+    
+    if (previewCode.includes('theme') || previewCode.includes('darkMode') || 
+        previewCode.includes('light-mode')) {
+      features.push('Theming Support');
+    }
+    
+    // If we couldn't detect any features, return a default set
+    return features.length > 0 ? features : ['Basic UI Components'];
+  };
+
   const screenNames = generateScreenNames();
+  const implementedFeatures = getImplementedFeatures();
 
   return (
     <div className="bg-background">
-      {/* Tabs navigation */}
-      <div className="border-b border-white/10 mb-4">
-        <div className="flex space-x-2 px-4">
-          <div className="border-b-2 border-primary py-2 px-4">
-            <span className="text-sm font-medium text-white">Preview</span>
-          </div>
-          <div className="py-2 px-4">
-            <span className="text-sm font-medium text-white/60">Code</span>
-          </div>
-        </div>
-      </div>
-      
-      {/* Platform selector */}
-      <div className="px-4 mb-4">
-        <div className="flex space-x-2 p-1 bg-white/5 rounded-md">
-          <button 
-            className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'ios' ? 'bg-white/10' : 'text-white/60'}`}
-            onClick={() => handleOSChange('ios')}
-          >
-            iOS
-          </button>
-          <button 
-            className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'android' ? 'bg-white/10' : 'text-white/60'}`}
-            onClick={() => handleOSChange('android')}
-          >
-            Android
-          </button>
-        </div>
-      </div>
-
       <div className="flex flex-1 w-full">
         <div className="w-full flex flex-col">
-          {/* Device selection */}
-          <div className="px-4 mb-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label className="text-xs text-white/70">Device Selection</Label>
-              <Select
-                value={selectedPhoneModel}
-                onValueChange={setSelectedPhoneModel}
-              >
-                <SelectTrigger className="bg-white/5 border-0 text-sm">
-                  <SelectValue placeholder="Select a device" />
-                </SelectTrigger>
-                <SelectContent>
-                  {phoneModels.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.name} ({model.releaseYear})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Platform and device selection in a single row */}
+          <div className="px-4 mb-4 flex items-center gap-4">
+            {/* Platform selector */}
+            <div className="flex-shrink-0">
+              <div className="flex space-x-2 p-1 bg-white/5 rounded-md">
+                <button 
+                  className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'ios' ? 'bg-white/10' : 'text-white/60'}`}
+                  onClick={() => handleOSChange('ios')}
+                >
+                  iOS
+                </button>
+                <button 
+                  className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'android' ? 'bg-white/10' : 'text-white/60'}`}
+                  onClick={() => handleOSChange('android')}
+                >
+                  Android
+                </button>
+              </div>
+            </div>
+            
+            {/* Device selection */}
+            <div className="flex-grow">
+              <div className="flex flex-col space-y-1.5">
+                <Label className="text-xs text-white/70">Device Selection</Label>
+                <Select
+                  value={selectedPhoneModel}
+                  onValueChange={setSelectedPhoneModel}
+                >
+                  <SelectTrigger className="bg-white/5 border-0 text-sm">
+                    <SelectValue placeholder="Select a device" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {phoneModels.map((model) => (
+                      <SelectItem key={model.id} value={model.id}>
+                        {model.name} ({model.releaseYear})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -300,7 +340,7 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
               </div>
             </div>
 
-            {/* QR code and information */}
+            {/* Device info, Screens selection, and Features */}
             <div className="flex-1 flex flex-col">
               {/* Device info */}
               <div className="mb-4">
@@ -337,29 +377,31 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
                 </div>
               </div>
 
-              {/* Features section */}
-              <div className="mt-4">
-                <div className="mb-2">
-                  <h3 className="text-sm font-medium text-white">Features in {getAppNameFromCode()}</h3>
-                  <p className="text-xs text-white/60">Your app includes the following powerful features that will enhance user experience.</p>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-3">
-                  {demoFeatures.slice(0, 8).map((feature) => (
-                    <div 
-                      key={feature.title}
-                      className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3"
-                    >
-                      <div className="flex mb-1.5 items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
+              {/* Features section - only show if we have real features */}
+              {implementedFeatures.length > 0 && (
+                <div className="mt-4">
+                  <div className="mb-2">
+                    <h3 className="text-sm font-medium text-white">Features in {getAppNameFromCode()}</h3>
+                    <p className="text-xs text-white/60">Your app includes the following implemented features.</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-3">
+                    {implementedFeatures.map((feature, index) => (
+                      <div 
+                        key={feature}
+                        className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3"
+                      >
+                        <div className="flex mb-1.5 items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                          <h4 className="text-xs font-medium text-white">{feature}</h4>
                         </div>
-                        <h4 className="text-xs font-medium text-white">{feature.title}</h4>
+                        <p className="text-[11px] text-white/70 leading-tight">{getFeatureDescription(feature)}</p>
                       </div>
-                      <p className="text-[11px] text-white/70 leading-tight">{feature.description}</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

@@ -6,12 +6,43 @@ interface NavigationBarProps {
 }
 
 export const NavigationBar: React.FC<NavigationBarProps> = ({ parsedUI }) => {
+  const textColor = parsedUI.hasDarkMode ? 'text-white' : 'text-gray-800';
+  
   return (
-    <div className="flex justify-between items-center mb-4">
-      <div className="text-lg font-bold">{parsedUI.appName || 'App Name'}</div>
-      <div className="flex items-center space-x-3">
-        <div className="h-5 w-5" style={{ backgroundColor: parsedUI.primaryColor || '#4F46E5', WebkitMaskImage: 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path><path d="M4 4h16a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"></path></svg>\')', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center' }}></div>
-        <div className="h-5 w-5" style={{ backgroundColor: parsedUI.primaryColor || '#4F46E5', WebkitMaskImage: 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>\')', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center' }}></div>
+    <div className="px-4 py-2 flex items-center justify-between">
+      <div className="flex items-center">
+        {parsedUI.hasBackButton && (
+          <button className="mr-2 text-xs p-1">
+            <div className="w-5 h-5 flex items-center justify-center">
+              <div className="w-3 h-3" style={{ 
+                backgroundColor: parsedUI.primaryColor || 'currentColor',
+                WebkitMaskImage: 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>\')',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                WebkitMaskSize: 'contain'
+              }}></div>
+            </div>
+          </button>
+        )}
+        <h1 className={`font-medium ${textColor}`} style={{ fontSize: '15px' }}>
+          {parsedUI.appTitle || parsedUI.screenTitle || 'Home'}
+        </h1>
+      </div>
+      
+      <div className="flex items-center gap-3">
+        {parsedUI.hasMenuButton && (
+          <button className="text-xs p-1">
+            <div className="w-5 h-5 flex items-center justify-center">
+              <div className="w-4 h-4" style={{ 
+                backgroundColor: parsedUI.primaryColor || 'currentColor',
+                WebkitMaskImage: 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>\')',
+                WebkitMaskRepeat: 'no-repeat',
+                WebkitMaskPosition: 'center',
+                WebkitMaskSize: 'contain'
+              }}></div>
+            </div>
+          </button>
+        )}
       </div>
     </div>
   );

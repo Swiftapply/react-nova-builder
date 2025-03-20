@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Check, Zap, Star, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,39 +15,45 @@ const FeatureShowcase: React.FC<FeatureShowcaseProps> = ({
   appName = 'Your App', 
   onFeatureClick 
 }) => {
-  // Group features into categories for better organization
-  const categorizeFeature = (feature: string | any): string => {
-    // Check if feature is a string before calling toLowerCase
-    if (typeof feature !== 'string') {
-      console.warn('Feature is not a string:', feature);
-      return 'other'; // Default category
-    }
-    
+  // Helper function to get icon based on feature text
+  const getFeatureIcon = (feature: string) => {
     const featureText = feature.toLowerCase();
     
     if (featureText.includes('auth') || 
         featureText.includes('login') || 
         featureText.includes('user') || 
         featureText.includes('profile')) {
-      return 'auth';
+      return <Zap className="h-3 w-3" />;
     } else if (featureText.includes('notification') || 
                featureText.includes('alert') || 
                featureText.includes('message')) {
-      return 'notifications';
+      return <AlertCircle className="h-3 w-3" />;
     } else if (featureText.includes('data') || 
                featureText.includes('sync') || 
                featureText.includes('storage') || 
                featureText.includes('save')) {
-      return 'data';
-    } else if (featureText.includes('share') || 
-               featureText.includes('social') || 
-               featureText.includes('connect')) {
-      return 'social';
-    } else if (featureText.includes('offline') || 
-               featureText.includes('cache')) {
-      return 'offline';
+      return <Star className="h-3 w-3" />;
     } else {
-      return 'other';
+      return <Check className="h-3 w-3" />;
+    }
+  };
+  
+  // Helper function to get color based on feature text
+  const getFeatureColor = (feature: string) => {
+    const featureText = feature.toLowerCase();
+    
+    if (featureText.includes('auth') || featureText.includes('login') || featureText.includes('user')) {
+      return "from-blue-500 to-blue-600";
+    } else if (featureText.includes('notification') || featureText.includes('alert')) {
+      return "from-amber-500 to-amber-600";
+    } else if (featureText.includes('data') || featureText.includes('sync') || featureText.includes('storage')) {
+      return "from-emerald-500 to-emerald-600";
+    } else if (featureText.includes('share') || featureText.includes('social')) {
+      return "from-purple-500 to-purple-600";
+    } else if (featureText.includes('offline')) {
+      return "from-gray-500 to-gray-600";
+    } else {
+      return "from-green-500 to-green-600";
     }
   };
 
@@ -61,11 +68,13 @@ const FeatureShowcase: React.FC<FeatureShowcaseProps> = ({
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {features && features.map((feature, index) => {
-          // Ensure feature is a string
-          const featureStr = typeof feature === 'string' ? feature : 
-            (feature && typeof feature.toString === 'function' ? feature.toString() : 'Unknown feature');
+          if (typeof feature !== 'string') {
+            console.warn('Feature is not a string:', feature);
+            return null;
+          }
           
-          const { icon, color } = categorizeFeature(featureStr);
+          const icon = getFeatureIcon(feature);
+          const colorClass = getFeatureColor(feature);
           
           return (
             <Card 
@@ -73,10 +82,10 @@ const FeatureShowcase: React.FC<FeatureShowcaseProps> = ({
               className="overflow-hidden transition-all hover:shadow-md cursor-pointer text-xs"
               onClick={() => onFeatureClick && onFeatureClick(feature)}
             >
-              <div className={`h-1 w-full bg-gradient-to-r ${color}`}></div>
+              <div className={`h-1 w-full bg-gradient-to-r ${colorClass}`}></div>
               <CardHeader className="py-2 px-3">
                 <div className="flex items-center gap-1.5">
-                  <div className={`p-1 rounded-full bg-gradient-to-r ${color} text-white`}>
+                  <div className={`p-1 rounded-full bg-gradient-to-r ${colorClass} text-white`}>
                     {icon}
                   </div>
                   <CardTitle className="text-xs font-medium truncate">{feature}</CardTitle>
@@ -109,13 +118,7 @@ const FeatureShowcase: React.FC<FeatureShowcaseProps> = ({
 };
 
 // Helper function to generate descriptions for features
-const getFeatureDescription = (feature: any): string => {
-  // Check if feature is a string before calling toLowerCase
-  if (typeof feature !== 'string') {
-    console.warn('Feature is not a string in getFeatureDescription:', feature);
-    return 'This feature enhances your app functionality.';
-  }
-  
+const getFeatureDescription = (feature: string): string => {
   const featureText = feature.toLowerCase();
   
   if (featureText.includes('auth') || featureText.includes('login') || featureText.includes('user')) {
