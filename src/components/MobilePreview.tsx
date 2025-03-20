@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Check, Smartphone, ExternalLink } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -219,45 +218,40 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
       <div className="flex flex-1 w-full">
         <div className="w-full flex flex-col">
           {/* Platform and device selection in a single row */}
-          <div className="px-4 mb-4 flex items-center gap-4">
-            {/* Platform selector */}
-            <div className="flex-shrink-0">
-              <div className="flex space-x-2 p-1 bg-white/5 rounded-md">
-                <button 
-                  className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'ios' ? 'bg-white/10' : 'text-white/60'}`}
-                  onClick={() => handleOSChange('ios')}
-                >
-                  iOS
-                </button>
-                <button 
-                  className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'android' ? 'bg-white/10' : 'text-white/60'}`}
-                  onClick={() => handleOSChange('android')}
-                >
-                  Android
-                </button>
-              </div>
+          <div className="px-4 mb-4 flex items-center justify-between">
+            {/* Platform selector - left aligned */}
+            <div className="flex space-x-2 p-1 bg-white/5 rounded-md">
+              <button 
+                className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'ios' ? 'bg-white/10' : 'text-white/60'}`}
+                onClick={() => handleOSChange('ios')}
+              >
+                iOS
+              </button>
+              <button 
+                className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'android' ? 'bg-white/10' : 'text-white/60'}`}
+                onClick={() => handleOSChange('android')}
+              >
+                Android
+              </button>
             </div>
             
-            {/* Device selection */}
-            <div className="flex-grow">
-              <div className="flex flex-col space-y-1.5">
-                <Label className="text-xs text-white/70">Device Selection</Label>
-                <Select
-                  value={selectedPhoneModel}
-                  onValueChange={setSelectedPhoneModel}
-                >
-                  <SelectTrigger className="bg-white/5 border-0 text-sm">
-                    <SelectValue placeholder="Select a device" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {phoneModels.map((model) => (
-                      <SelectItem key={model.id} value={model.id}>
-                        {model.name} ({model.releaseYear})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Device selection - right aligned */}
+            <div className="flex-shrink-0 w-48">
+              <Select
+                value={selectedPhoneModel}
+                onValueChange={setSelectedPhoneModel}
+              >
+                <SelectTrigger className="bg-white/5 border-0 text-sm">
+                  <SelectValue placeholder="Select a device" />
+                </SelectTrigger>
+                <SelectContent>
+                  {phoneModels.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>
+                      {model.name} ({model.releaseYear})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -297,7 +291,6 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
                   </>
                 )}
                 
-                {/* Camera cutouts for Android phones */}
                 {selectedOS === 'android' && (
                   <>
                     {/* Punch hole for Pixel 7 and 8 */}
@@ -317,7 +310,6 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
                   </>
                 )}
                 
-                {/* Power and volume buttons for iOS */}
                 {selectedOS === 'ios' && (
                   <>
                     {/* Power button */}
@@ -328,7 +320,6 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
                   </>
                 )}
                 
-                {/* Power and volume buttons for Android */}
                 {selectedOS === 'android' && (
                   <>
                     {/* Power button */}

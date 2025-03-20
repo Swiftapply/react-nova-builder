@@ -55,7 +55,7 @@ const Builder = () => {
               content: `I'll help you build a fully functional ${appData.appName} app. Here's my development plan:
 
 1. **App Concept & Requirements Analysis**
-   - Core features: ${appData.features.map(feature => `\n   - ${typeof feature === 'object' ? feature.name || JSON.stringify(feature) : feature}`).join('')}
+   - Core features: ${appData.features.map(feature => `\n   - ${typeof feature === 'object' ? feature.name || JSON.stringify(feature || {}) : (feature || '')}`).join('')}
    - Target users: ${appData.description.includes('for') ? appData.description.split('for')[1].trim() : 'Mobile app users'}
 
 2. **Technical Architecture**
@@ -255,7 +255,9 @@ Let's start by setting up the project structure and implementing the core featur
                         appName={generatedApp.appName}
                         onFeatureClick={(feature) => {
                           // Add feature to the chat as a suggestion
-                          handleMessageSent(`Can you tell me more about the ${feature} feature?`);
+                          if (feature) {
+                            handleMessageSent(`Can you tell me more about the ${feature} feature?`);
+                          }
                         }}
                       />
                     </ErrorBoundary>
@@ -271,7 +273,7 @@ Let's start by setting up the project structure and implementing the core featur
                       ...generatedApp, 
                       previewCode: newCode 
                     };
-                    setGeneratedApp(updatedApp); // Make sure you have this state setter from useAIService
+                    setGeneratedApp(updatedApp);
                   }
                 }}
               />
