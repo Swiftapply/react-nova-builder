@@ -1,4 +1,6 @@
 
+// Let's improve the code generation for React Native apps
+
 import { useState } from 'react';
 import { LLMModelType, useLLMModel, callOpenRouter } from './LLMService';
 import { parseReactNativeCode, generateDemoFeatures } from './CodeParserService';
@@ -86,7 +88,7 @@ export const useAIService = () => {
       
       console.log(`Using ${currentModel.name} by ${currentModel.provider} to generate app`);
       
-      // Make API call to Gemini API
+      // Make API call to LLM API
       const response = await callOpenRouter(messages, currentModel.id);
       
       // Check if response has the expected structure
@@ -198,7 +200,12 @@ Your task is to generate a complete, fully functional React Native code file (or
 6. Handle basic error cases
 7. Use proper TypeScript types
 
-Format your response as a single continuous code file wrapped in markdown code blocks.` 
+Your response MUST be formatted as follows:
+\`\`\`jsx
+// Complete React Native code here
+\`\`\`
+
+It's critical that your code is enclosed in a single code block with the jsx language specifier. This specific format is required for the code to be properly processed by the mobile app builder.` 
         },
         { role: "user", content: `Generate complete React Native code for a screen or component for my ${updatedApp.appName} app, focusing on ${updatedApp.steps[currentStepIndex].title} functionality.` }
       ];
@@ -213,7 +220,7 @@ Format your response as a single continuous code file wrapped in markdown code b
       
       // Extract code from the response
       const responseText = response.choices[0].message.content;
-      const codeMatch = responseText.match(/```(?:jsx|js|tsx|ts)?([\s\S]*?)```/);
+      const codeMatch = responseText.match(/```(?:jsx|js|tsx|ts)([\s\S]*?)```/);
       
       // Update the step with the response content and code
       updatedApp.steps[currentStepIndex].output = responseText;
@@ -273,6 +280,15 @@ Format your response as a single continuous code file wrapped in markdown code b
     ];
   };
 
+  // Generate a unique Expo project ID
+  const generateExpoProjectId = (appName: string): string => {
+    // Create a URL-friendly ID based on the app name
+    const baseId = appName.toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Add a random suffix to ensure uniqueness
+    const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    return `${baseId}-${randomSuffix}`;
+  };
+
   // Generate preview code based on the app concept
   const generatePreviewCode = async (prompt: string, appConcept: any): Promise<string> => {
     try {
@@ -296,7 +312,12 @@ Follow these guidelines:
 The code must be complete enough to be immediately usable in an Expo project.
 Include ALL necessary imports, component definitions, and styling.
 
-Your response MUST be ONLY the code wrapped in triple backticks with the language specified as jsx.`
+IMPORTANT: Your response MUST be formatted as follows:
+\`\`\`jsx
+// Complete React Native code here
+\`\`\`
+
+It's critical that your code is enclosed in a single code block with the jsx language specifier. This specific format is required for the code to be properly processed by the mobile app builder.`
         },
         { 
           role: "user", 
@@ -314,6 +335,8 @@ Make it fully functional with proper navigation, state management, and data hand
       
       // Extract code from the response
       const responseText = response?.choices?.[0]?.message?.content || '';
+      console.log('Response from AI for code generation:', responseText.substring(0, 100) + '...');
+      
       const codeMatch = responseText.match(/```(?:jsx|javascript|js|tsx|ts)([\s\S]*?)```/);
       
       if (!codeMatch) {
@@ -373,9 +396,12 @@ Design Requirements:
    - Use React Native Vector Icons (preferably Phosphor or Lucide)
    - Use SafeAreaView and modern Flexbox patterns with consistent spacing
 
-Focus on creating a UI that feels ultra-premium, cutting-edge, and delightful to use. Create a design system with consistent spacing, typography, and color application. Use layered shadows, subtle blurs, and micro-interactions to create depth and tactility. Ensure all interactive elements have rich touch states with spring animations. The final result should feel like a polished, production-ready app.
+IMPORTANT: Your response MUST be formatted as follows:
+\`\`\`jsx
+// Complete React Native code here
+\`\`\`
 
-Your response MUST be ONLY the code wrapped in triple backticks with the language specified as jsx. Do not include any explanations or text outside the code block.` 
+It's critical that your code is enclosed in a single code block with the jsx language specifier. This specific format is required for the code to be properly processed by the mobile app builder.` 
         },
         { role: "user", content: `Generate improved React Native code for my ${appData.appName} app.` }
       ];
@@ -430,46 +456,195 @@ Your response MUST be ONLY the code wrapped in triple backticks with the languag
 const generateFallbackCode = (appConcept: any): string => {
   return `
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 
+// Mock data for demo purposes
+const POSTS = [
+  {
+    id: '1',
+    username: 'user123',
+    imageUrl: 'https://picsum.photos/seed/pic1/400/400',
+    caption: 'Enjoying a beautiful day!',
+    likes: 124,
+    comments: 23,
+    timestamp: '2h ago'
+  },
+  {
+    id: '2',
+    username: 'traveler',
+    imageUrl: 'https://picsum.photos/seed/pic2/400/400',
+    caption: 'Amazing views from my trip',
+    likes: 253,
+    comments: 42,
+    timestamp: '5h ago'
+  },
+  {
+    id: '3',
+    username: 'foodlover',
+    imageUrl: 'https://picsum.photos/seed/pic3/400/400',
+    caption: 'Delicious brunch with friends',
+    likes: 87,
+    comments: 15,
+    timestamp: '1d ago'
+  }
+];
+
+// Main App component
 const ${appConcept.appName.replace(/\s+/g, '')}App = () => {
   const [activeTab, setActiveTab] = useState('home');
+  const [likedPosts, setLikedPosts] = useState({});
 
+  const toggleLike = (postId) => {
+    setLikedPosts(prev => ({
+      ...prev,
+      [postId]: !prev[postId]
+    }));
+  };
+
+  // HomeScreen component
+  const HomeScreen = () => (
+    <ScrollView style={styles.feedContainer}>
+      {POSTS.map(post => (
+        <View key={post.id} style={styles.postContainer}>
+          <View style={styles.postHeader}>
+            <View style={styles.userInfoContainer}>
+              <View style={styles.userAvatar}></View>
+              <Text style={styles.username}>{post.username}</Text>
+            </View>
+            <Text style={styles.moreOptions}>•••</Text>
+          </View>
+          
+          <View style={styles.imageContainer}>
+            <View style={styles.postImage} />
+          </View>
+          
+          <View style={styles.postActions}>
+            <TouchableOpacity onPress={() => toggleLike(post.id)}>
+              <Text style={[styles.actionIcon, likedPosts[post.id] && styles.likedIcon]}>♥</Text>
+            </TouchableOpacity>
+            <Text style={styles.actionIcon}>💬</Text>
+            <Text style={styles.actionIcon}>🔄</Text>
+            <View style={styles.spacer} />
+            <Text style={styles.actionIcon}>🔖</Text>
+          </View>
+          
+          <View style={styles.postDetails}>
+            <Text style={styles.likes}>{likedPosts[post.id] ? post.likes + 1 : post.likes} likes</Text>
+            <View style={styles.captionContainer}>
+              <Text style={styles.captionUsername}>{post.username}</Text>
+              <Text style={styles.caption}>{post.caption}</Text>
+            </View>
+            <Text style={styles.viewComments}>View all {post.comments} comments</Text>
+            <Text style={styles.timestamp}>{post.timestamp}</Text>
+          </View>
+        </View>
+      ))}
+    </ScrollView>
+  );
+
+  // Profile Screen component
+  const ProfileScreen = () => (
+    <ScrollView style={styles.profileContainer}>
+      <View style={styles.profileHeader}>
+        <View style={styles.profileImage}></View>
+        <View style={styles.profileStats}>
+          <View style={styles.statContainer}>
+            <Text style={styles.statCount}>12</Text>
+            <Text style={styles.statLabel}>Posts</Text>
+          </View>
+          <View style={styles.statContainer}>
+            <Text style={styles.statCount}>354</Text>
+            <Text style={styles.statLabel}>Followers</Text>
+          </View>
+          <View style={styles.statContainer}>
+            <Text style={styles.statCount}>286</Text>
+            <Text style={styles.statLabel}>Following</Text>
+          </View>
+        </View>
+      </View>
+      
+      <Text style={styles.profileName}>John Doe</Text>
+      <Text style={styles.profileBio}>Photography enthusiast | Traveler | Food lover</Text>
+      
+      <TouchableOpacity style={styles.editProfileButton}>
+        <Text style={styles.editProfileText}>Edit Profile</Text>
+      </TouchableOpacity>
+      
+      <View style={styles.profileGrid}>
+        {[1, 2, 3, 4, 5, 6].map(item => (
+          <View key={item} style={styles.gridItem}></View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+
+  // Search Screen component
+  const SearchScreen = () => (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchBarContainer}>
+        <View style={styles.searchBar}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={styles.searchPlaceholder}>Search</Text>
+        </View>
+      </View>
+      
+      <ScrollView style={styles.discoverContainer}>
+        <View style={styles.exploreGrid}>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(item => (
+            <View key={item} style={styles.exploreItem}></View>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
+
+  // Render active screen based on tab
+  const renderScreen = () => {
+    switch (activeTab) {
+      case 'home':
+        return <HomeScreen />;
+      case 'search':
+        return <SearchScreen />;
+      case 'profile':
+        return <ProfileScreen />;
+      default:
+        return <HomeScreen />;
+    }
+  };
+
+  // Main render
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>${appConcept.appName}</Text>
       </View>
       
-      <ScrollView style={styles.content}>
-        <Text style={styles.description}>${appConcept.description}</Text>
-        
-        <Text style={styles.sectionTitle}>Features</Text>
-        {${JSON.stringify(appConcept.features)}.map((feature, index) => (
-          <View key={index} style={styles.featureItem}>
-            <Text style={styles.featureText}>• {feature}</Text>
-          </View>
-        ))}
-      </ScrollView>
+      {renderScreen()}
       
       <View style={styles.tabBar}>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'home' && styles.activeTab]} 
+          style={styles.tabItem} 
           onPress={() => setActiveTab('home')}
         >
-          <Text style={styles.tabText}>Home</Text>
+          <Text style={[styles.tabIcon, activeTab === 'home' && styles.activeTab]}>🏠</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'search' && styles.activeTab]} 
+          style={styles.tabItem}
           onPress={() => setActiveTab('search')}
         >
-          <Text style={styles.tabText}>Search</Text>
+          <Text style={[styles.tabIcon, activeTab === 'search' && styles.activeTab]}>🔍</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem}>
+          <Text style={styles.tabIcon}>➕</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tabItem}>
+          <Text style={styles.tabIcon}>❤️</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'profile' && styles.activeTab]} 
+          style={styles.tabItem}
           onPress={() => setActiveTab('profile')}
         >
-          <Text style={styles.tabText}>Profile</Text>
+          <Text style={[styles.tabIcon, activeTab === 'profile' && styles.activeTab]}>👤</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -479,79 +654,220 @@ const ${appConcept.appName.replace(/\s+/g, '')}App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fafafa',
   },
   header: {
-    padding: 15,
-    backgroundColor: '#4a90e2',
+    height: 44,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#DBDBDB',
+    backgroundColor: '#fff',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  content: {
-    flex: 1,
-    padding: 15,
-  },
-  description: {
     fontSize: 16,
-    marginBottom: 20,
-    color: '#333',
-    lineHeight: 22,
-  },
-  sectionTitle: {
-    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
   },
-  featureItem: {
-    marginBottom: 10,
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  feedContainer: {
+    flex: 1,
   },
-  featureText: {
-    fontSize: 15,
-    color: '#333',
+  postContainer: {
+    marginBottom: 10,
+    backgroundColor: '#fff',
+  },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 10,
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#DBDBDB',
+    marginRight: 10,
+  },
+  username: {
+    fontWeight: 'bold',
+  },
+  moreOptions: {
+    fontSize: 16,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 300,
+    backgroundColor: '#EFEFEF',
+  },
+  postImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#DBDBDB',
+  },
+  postActions: {
+    flexDirection: 'row',
+    padding: 10,
+  },
+  actionIcon: {
+    fontSize: 24,
+    marginRight: 15,
+  },
+  likedIcon: {
+    color: 'red',
+  },
+  spacer: {
+    flex: 1,
+  },
+  postDetails: {
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+  },
+  likes: {
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  captionContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  captionUsername: {
+    fontWeight: 'bold',
+    marginRight: 5,
+  },
+  caption: {
+    flex: 1,
+  },
+  viewComments: {
+    color: '#8E8E8E',
+    marginTop: 5,
+  },
+  timestamp: {
+    color: '#8E8E8E',
+    fontSize: 12,
+    marginTop: 5,
   },
   tabBar: {
     flexDirection: 'row',
+    height: 50,
     borderTopWidth: 1,
-    borderTopColor: '#e1e4e8',
-    backgroundColor: 'white',
+    borderTopColor: '#DBDBDB',
+    backgroundColor: '#fff',
   },
-  tab: {
+  tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 12,
+    justifyContent: 'center',
+  },
+  tabIcon: {
+    fontSize: 24,
   },
   activeTab: {
-    borderTopWidth: 2,
-    borderTopColor: '#4a90e2',
+    opacity: 1,
   },
-  tabText: {
-    fontSize: 14,
-    color: '#333',
+  // Profile screen styles
+  profileContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    padding: 15,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#DBDBDB',
+  },
+  profileStats: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  statContainer: {
+    alignItems: 'center',
+  },
+  statCount: {
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  statLabel: {
+    color: '#8E8E8E',
+    fontSize: 12,
+  },
+  profileName: {
+    fontWeight: 'bold',
+    paddingHorizontal: 15,
+  },
+  profileBio: {
+    paddingHorizontal: 15,
+    marginTop: 5,
+  },
+  editProfileButton: {
+    marginHorizontal: 15,
+    marginVertical: 10,
+    padding: 7,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#DBDBDB',
+    alignItems: 'center',
+  },
+  editProfileText: {
+    fontWeight: 'bold',
+  },
+  profileGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 15,
+  },
+  gridItem: {
+    width: '33.3%',
+    aspectRatio: 1,
+    padding: 1,
+    backgroundColor: '#DBDBDB',
+  },
+  // Search screen styles
+  searchContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  searchBarContainer: {
+    padding: 10,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EFEFEF',
+    borderRadius: 10,
+    padding: 8,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchPlaceholder: {
+    color: '#8E8E8E',
+  },
+  discoverContainer: {
+    flex: 1,
+  },
+  exploreGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  exploreItem: {
+    width: '33.3%',
+    aspectRatio: 1,
+    padding: 1,
+    backgroundColor: '#DBDBDB',
   },
 });
 
 export default ${appConcept.appName.replace(/\s+/g, '')}App;
 `;
-};
-
-// Helper function to generate a unique Expo project ID
-const generateExpoProjectId = (appName: string): string => {
-  // Create a URL-friendly ID based on the app name
-  const baseId = appName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  // Add a random suffix to ensure uniqueness
-  const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `${baseId}-${randomSuffix}`;
 };

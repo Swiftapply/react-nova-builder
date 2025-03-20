@@ -1,429 +1,289 @@
-import React, { useState, useEffect } from 'react';
-import { Check, Smartphone, ExternalLink } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import QRCode from 'qrcode';
-import CodeRenderer from './CodeRenderer';
-import { generateDemoFeatures } from '@/services/CodeParserService';
 
-// Feature description helper function
-const getFeatureDescription = (feature: string): string => {
-  const featureText = feature.toLowerCase();
-  
-  if (featureText.includes('auth') || featureText.includes('login') || featureText.includes('user')) {
-    return 'Secure user authentication and profile management.';
-  } else if (featureText.includes('notification') || featureText.includes('alert')) {
-    return 'Real-time notifications to keep users engaged.';
-  } else if (featureText.includes('data') || featureText.includes('sync') || featureText.includes('storage')) {
-    return 'Seamless data synchronization across devices.';
-  } else if (featureText.includes('share') || featureText.includes('social')) {
-    return 'Integrated social sharing capabilities.';
-  } else if (featureText.includes('offline')) {
-    return 'Full functionality even without internet connection.';
-  } else if (featureText.includes('camera') || featureText.includes('photo')) {
-    return 'Capture and manage photos within the app.';
-  } else if (featureText.includes('location') || featureText.includes('map')) {
-    return 'Location-based features and mapping capabilities.';
-  } else if (featureText.includes('payment') || featureText.includes('purchase')) {
-    return 'Secure in-app payment processing.';
-  } else if (featureText.includes('chart') || featureText.includes('graph')) {
-    return 'Data visualization with interactive charts.';
-  } else {
-    return 'This feature enhances your app functionality.';
-  }
-};
+import React, { useState, useEffect } from 'react';
+import CodeRenderer from './CodeRenderer';
+import { PhoneIphone, Smartphone, Info, X } from 'lucide-react';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui';
 
 interface MobilePreviewProps {
-  qrCodeUrl?: string;
   previewCode?: string;
+  qrCodeUrl?: string;
 }
 
-type PhoneModel = {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  scaleFactor: number;
-  releaseYear: number;
+// Available device models with their specs
+const deviceModels = [
+  { id: 'iphone-13', name: 'iPhone 13', width: 390, height: 844, platform: 'ios', year: 2021 },
+  { id: 'iphone-14', name: 'iPhone 14', width: 390, height: 844, platform: 'ios', year: 2022 },
+  { id: 'iphone-15', name: 'iPhone 15', width: 393, height: 852, platform: 'ios', year: 2023 },
+  { id: 'pixel-6', name: 'Pixel 6', width: 412, height: 915, platform: 'android', year: 2021 },
+  { id: 'pixel-7', name: 'Pixel 7', width: 412, height: 915, platform: 'android', year: 2022 },
+  { id: 'samsung-s23', name: 'Samsung S23', width: 360, height: 780, platform: 'android', year: 2023 },
+];
+
+// Function to get feature description
+const getFeatureDescription = (feature: string): string => {
+  const featureDescriptions: Record<string, string> = {
+    'User Authentication': 'Secure login and registration system',
+    'Social Feed': 'View posts from other users',
+    'Post Creation': 'Create and share posts with photos',
+    'User Profiles': 'Customizable user profiles',
+    'Commenting': 'Comment on posts',
+    'Likes': 'Like posts from other users',
+    'Search': 'Find users and content',
+    'Notifications': 'Get alerts for new activity',
+    'Direct Messaging': 'Chat with other users',
+    'Photo/Video Posting': 'Share photos and videos',
+    'Like and Comment': 'Engage with content',
+    'User Feed': 'View personalized content',
+    'Profile Page': 'View and edit your profile',
+    'Explore Page': 'Discover new content',
+    'Camera Integration': 'Take photos directly in the app',
+    'Location Services': 'Tag content with location data',
+    'Story Features': 'Share temporary content',
+    'Bookmarks': 'Save content for later'
+  };
+
+  return featureDescriptions[feature] || 'Feature not found';
 };
 
-// Updated with accurate screen dimensions from Apple's official specifications
-const iPhoneModels: PhoneModel[] = [
-  { id: 'iphone-x', name: 'iPhone X', width: 375, height: 812, scaleFactor: 0.85, releaseYear: 2017 },
-  { id: 'iphone-11', name: 'iPhone 11', width: 414, height: 896, scaleFactor: 0.8, releaseYear: 2019 },
-  { id: 'iphone-12', name: 'iPhone 12', width: 390, height: 844, scaleFactor: 0.85, releaseYear: 2020 },
-  { id: 'iphone-13', name: 'iPhone 13', width: 390, height: 844, scaleFactor: 0.85, releaseYear: 2021 },
-  { id: 'iphone-14', name: 'iPhone 14', width: 390, height: 844, scaleFactor: 0.85, releaseYear: 2022 },
-  { id: 'iphone-15', name: 'iPhone 15', width: 393, height: 852, scaleFactor: 0.85, releaseYear: 2023 },
-];
-
-const pixelModels: PhoneModel[] = [
-  { id: 'pixel-4', name: 'Pixel 4', width: 393, height: 830, scaleFactor: 0.85, releaseYear: 2019 },
-  { id: 'pixel-5', name: 'Pixel 5', width: 393, height: 851, scaleFactor: 0.85, releaseYear: 2020 },
-  { id: 'pixel-6', name: 'Pixel 6', width: 393, height: 851, scaleFactor: 0.85, releaseYear: 2021 },
-  { id: 'pixel-7', name: 'Pixel 7', width: 411, height: 914, scaleFactor: 0.8, releaseYear: 2022 },
-  { id: 'pixel-8', name: 'Pixel 8', width: 411, height: 914, scaleFactor: 0.8, releaseYear: 2023 },
-];
-
-const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode }) => {
-  const [selectedOS, setSelectedOS] = useState('ios');
-  const [selectedPhoneModel, setSelectedPhoneModel] = useState<string>(
-    selectedOS === 'ios' ? iPhoneModels[5].id : pixelModels[4].id
-  );
-  const [qrCodeImage, setQRCodeImage] = useState<string>('');
-  const [currentScreen, setCurrentScreen] = useState<string>('Home Screen');
+const MobilePreview: React.FC<MobilePreviewProps> = ({ previewCode, qrCodeUrl }) => {
+  const [selectedPlatform, setSelectedPlatform] = useState<'ios' | 'android'>('ios');
+  const [selectedDeviceId, setSelectedDeviceId] = useState('iphone-15');
+  const [showInfo, setShowInfo] = useState(false);
+  const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
   
-  // Generate QR code when URL changes
+  // Get the selected device
+  const selectedDevice = deviceModels.find(d => d.id === selectedDeviceId) || deviceModels[0];
+  
+  // Filter devices for the selected platform
+  const platformDevices = deviceModels.filter(device => device.platform === selectedPlatform);
+  
+  // Set a default device when platform changes
   useEffect(() => {
-    if (qrCodeUrl) {
-      QRCode.toDataURL(qrCodeUrl, {
-        width: 200,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      })
-      .then(url => {
-        setQRCodeImage(url);
-      })
-      .catch(err => {
-        console.error('Error generating QR code:', err);
-      });
+    const defaultDevice = platformDevices[0];
+    if (defaultDevice) {
+      setSelectedDeviceId(defaultDevice.id);
     }
-  }, [qrCodeUrl]);
-  
-  const phoneModels = selectedOS === 'ios' ? iPhoneModels : pixelModels;
-  const currentPhone = phoneModels.find(phone => phone.id === selectedPhoneModel) || 
-    (selectedOS === 'ios' ? iPhoneModels[5] : pixelModels[4]);
-  
-  const handleOSChange = (newOS: string) => {
-    setSelectedOS(newOS);
-    // Reset to the latest model of the selected OS
-    setSelectedPhoneModel(newOS === 'ios' ? iPhoneModels[5].id : pixelModels[4].id);
-  };
+  }, [selectedPlatform]);
 
-  // Get bezel color based on phone model
-  const getBezelColor = () => {
-    if (selectedOS === 'ios') {
-      // iPhone models with different bezel colors
-      if (currentPhone.id === 'iphone-15') {
-        return 'bg-gradient-to-b from-gray-300 to-gray-400'; // Titanium finish for iPhone 15
-      } else if (['iphone-14', 'iphone-13', 'iphone-12'].includes(currentPhone.id)) {
-        return 'bg-gradient-to-b from-gray-400 to-gray-500'; // Aluminum finish for newer iPhones
-      } else {
-        return 'bg-gradient-to-b from-gray-500 to-gray-600'; // Stainless steel for older models
-      }
-    } else {
-      // Pixel models with different bezel colors
-      if (['pixel-8', 'pixel-7'].includes(currentPhone.id)) {
-        return 'bg-gradient-to-b from-gray-300 to-gray-400'; // Polished aluminum for newer Pixels
-      } else {
-        return 'bg-gradient-to-b from-gray-600 to-gray-700'; // Matte finish for older Pixels
+  // Extract screens from the preview code
+  const extractScreens = (code?: string) => {
+    if (!code) return [];
+    
+    const screenMatches = code.match(/Screen|View|Page|Component/g);
+    if (!screenMatches) return [];
+    
+    // Try to extract screen names
+    const screenNameRegex = /(const|function)\s+([A-Z][a-zA-Z0-9]*(?:Screen|View|Page))/g;
+    const screens: string[] = [];
+    let match;
+    
+    while ((match = screenNameRegex.exec(code)) !== null) {
+      if (match[2] && !screens.includes(match[2])) {
+        screens.push(match[2]);
       }
     }
+    
+    // If we couldn't find any named screens, use default screens
+    if (screens.length === 0) {
+      return ['Home Screen', 'Profile Screen', 'Search Screen', 'Login Screen', 'Detail Screen'];
+    }
+    
+    return screens;
   };
-
-  // Generate demo screens based on app details in code
-  const generateScreenNames = () => {
-    if (previewCode && previewCode.includes('pomodoro')) {
-      return [
-        'Onboarding Screen', 'Login Screen', 'Home Screen', 
-        'Task List Screen', 'Statistics Screen', 'Settings Screen'
-      ];
-    }
-    
-    if (previewCode && previewCode.includes('fitness')) {
-      return [
-        'Welcome Screen', 'Profile Setup', 'Dashboard', 'Workout Screen', 
-        'Exercise List', 'Progress Screen'
-      ];
-    }
-    
-    return [
-      'Splash Screen', 'Login Screen', 'Home Screen', 'Detail Screen', 
-      'Profile Screen', 'Settings Screen'
-    ];
-  };
-
-  // Extract app name from code
-  const getAppNameFromCode = () => {
-    if (!previewCode) return 'App Preview';
-    
-    try {
-      const appNameMatch = previewCode.match(/const\s+([A-Za-z0-9_]+)App\s*=/i) || 
-                           previewCode.match(/export\s+default\s+function\s+([A-Za-z0-9_]+)/i) ||
-                           previewCode.match(/class\s+([A-Za-z0-9_]+)App/i);
-      
-      return appNameMatch ? appNameMatch[1] : previewCode.includes('pomodoro') ? 'PomoTimer' : 'AppPreview';
-    } catch (e) {
-      return 'App Preview';
-    }
-  };
-
-  // Get features that we've actually implemented
-  const getImplementedFeatures = () => {
-    if (!previewCode) return [];
-    
-    // Analyze the code to determine which features are actually implemented
-    const features: string[] = [];
-    
-    if (previewCode.includes('authentication') || previewCode.includes('login') || 
-        previewCode.includes('signin') || previewCode.includes('signup')) {
-      features.push('User Authentication');
-    }
-    
-    if (previewCode.includes('notification') || previewCode.includes('alert')) {
-      features.push('Push Notifications');
-    }
-    
-    if (previewCode.includes('fetch') || previewCode.includes('axios') || 
-        previewCode.includes('api.') || previewCode.includes('getData')) {
-      features.push('Data Synchronization');
-    }
-    
-    if (previewCode.includes('AsyncStorage') || previewCode.includes('localStorage') || 
-        previewCode.includes('saveData')) {
-      features.push('Offline Storage');
-    }
-    
-    if (previewCode.includes('camera') || previewCode.includes('image') || 
-        previewCode.includes('photo') || previewCode.includes('gallery')) {
-      features.push('Camera & Media');
-    }
-    
-    if (previewCode.includes('share') || previewCode.includes('social')) {
-      features.push('Social Sharing');
-    }
-    
-    if (previewCode.includes('map') || previewCode.includes('location') || 
-        previewCode.includes('coordinate')) {
-      features.push('Location Services');
-    }
-    
-    if (previewCode.includes('theme') || previewCode.includes('darkMode') || 
-        previewCode.includes('light-mode')) {
-      features.push('Theming Support');
-    }
-    
-    // If we couldn't detect any features, return a default set
-    return features.length > 0 ? features : ['Basic UI Components'];
-  };
-
-  const screenNames = generateScreenNames();
-  const implementedFeatures = getImplementedFeatures();
+  
+  const screens = extractScreens(previewCode);
 
   return (
-    <div className="bg-background">
-      <div className="flex flex-1 w-full">
-        <div className="w-full flex flex-col">
-          {/* Platform and device selection in a single row */}
-          <div className="px-4 mb-4 flex items-center justify-between">
-            {/* Platform selector - left aligned */}
-            <div className="flex space-x-2 p-1 bg-white/5 rounded-md">
-              <button 
-                className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'ios' ? 'bg-white/10' : 'text-white/60'}`}
-                onClick={() => handleOSChange('ios')}
-              >
-                iOS
-              </button>
-              <button 
-                className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'android' ? 'bg-white/10' : 'text-white/60'}`}
-                onClick={() => handleOSChange('android')}
-              >
-                Android
-              </button>
-            </div>
-            
-            {/* Device selection - right aligned */}
-            <div className="flex-shrink-0 w-48">
-              <Select
-                value={selectedPhoneModel}
-                onValueChange={setSelectedPhoneModel}
-              >
-                <SelectTrigger className="bg-white/5 border-0 text-sm">
-                  <SelectValue placeholder="Select a device" />
-                </SelectTrigger>
-                <SelectContent>
-                  {phoneModels.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.name} ({model.releaseYear})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <div className="flex flex-col h-full p-4">
+      {/* Device selection header */}
+      <div className="flex justify-between items-center mb-4">
+        {/* Platform toggle */}
+        <div className="flex items-center bg-white/5 rounded-lg p-0.5">
+          <button
+            onClick={() => setSelectedPlatform('ios')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
+              selectedPlatform === 'ios' ? 'bg-white/10 text-white' : 'text-white/60'
+            }`}
+          >
+            <PhoneIphone className="w-4 h-4" />
+            <span>iOS</span>
+          </button>
+          <button
+            onClick={() => setSelectedPlatform('android')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
+              selectedPlatform === 'android' ? 'bg-white/10 text-white' : 'text-white/60'
+            }`}
+          >
+            <Smartphone className="w-4 h-4" />
+            <span>Android</span>
+          </button>
+        </div>
+        
+        {/* Device selector and info */}
+        <div className="flex items-center gap-2">
+          <Select
+            value={selectedDeviceId}
+            onValueChange={setSelectedDeviceId}
+          >
+            <SelectTrigger className="w-[180px] h-9 bg-white/5 border-white/10 text-sm">
+              <SelectValue placeholder="Select device" />
+            </SelectTrigger>
+            <SelectContent>
+              {platformDevices.map(device => (
+                <SelectItem key={device.id} value={device.id}>
+                  {device.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  onClick={() => setShowInfo(!showInfo)}
+                  className="p-1.5 rounded-md hover:bg-white/5 text-white/70"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Device information</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
+      
+      {/* Device info panel */}
+      {showInfo && (
+        <div className="bg-white/5 rounded-lg p-3 mb-4 text-sm">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-medium">Device Info</h3>
+            <button 
+              onClick={() => setShowInfo(false)}
+              className="p-1 hover:bg-white/10 rounded-md"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-
-          <div className="flex md:flex-col lg:flex-row gap-6 px-4">
-            {/* Phone preview */}
-            <div className="flex-1 flex justify-center items-start">
-              <div 
-                className={`relative rounded-[40px] ${getBezelColor()} p-1 shadow-lg transform transition-all duration-300`}
-                style={{
-                  width: `${currentPhone.width * currentPhone.scaleFactor}px`,
-                  height: `${currentPhone.height * currentPhone.scaleFactor}px`,
-                  maxHeight: '100%'
-                }}
-              >
-                {/* Dynamic notch for different iPhone models */}
-                {selectedOS === 'ios' && (
-                  <>
-                    {/* Dynamic Island for iPhone 15 */}
-                    {currentPhone.id === 'iphone-15' && (
-                      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-[90px] h-[25px] bg-black rounded-full z-50 flex items-center justify-center border border-white/70">
-                        <div className="absolute right-[18px] w-[8px] h-[8px] rounded-full bg-black border border-gray-800 flex items-center justify-center">
-                          <div className="w-[4px] h-[4px] rounded-full bg-gray-700"></div>
-                        </div>
-                        <div className="absolute left-[22px] w-[6px] h-[6px] rounded-full bg-gray-700"></div>
-                      </div>
-                    )}
-                    {/* iPhone X through 14 notch - positioned inside the screen */}
-                    {['iphone-x', 'iphone-11', 'iphone-12', 'iphone-13', 'iphone-14'].includes(currentPhone.id) && (
-                      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[120px] h-[30px] bg-black rounded-b-2xl z-40 flex items-end justify-center pb-1 border border-white/70">
-                        <div className="w-[6px] h-[6px] rounded-full bg-gray-700 mx-1"></div>
-                        <div className="w-[8px] h-[8px] rounded-full bg-black border border-gray-800 mx-1 flex items-center justify-center">
-                          <div className="w-[4px] h-[4px] rounded-full bg-gray-700"></div>
-                        </div>
-                        <div className="w-[6px] h-[6px] rounded-full bg-gray-700 mx-1"></div>
-                      </div>
-                    )}
-                  </>
-                )}
-                
-                {selectedOS === 'android' && (
-                  <>
-                    {/* Punch hole for Pixel 7 and 8 */}
-                    {['pixel-7', 'pixel-8'].includes(currentPhone.id) && (
-                      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-[12px] h-[12px] bg-black rounded-full z-50 border border-white/70 flex items-center justify-center">
-                        <div className="w-[6px] h-[6px] rounded-full bg-gray-700"></div>
-                      </div>
-                    )}
-                    {/* Punch hole for older Pixel models */}
-                    {['pixel-4', 'pixel-5', 'pixel-6'].includes(currentPhone.id) && (
-                      <div className="absolute top-0 right-[20%] w-[60px] h-[24px] bg-black z-50 flex items-center justify-center border border-white/70">
-                        <div className="w-[8px] h-[8px] rounded-full bg-black border border-gray-800 flex items-center justify-center">
-                          <div className="w-[4px] h-[4px] rounded-full bg-gray-700"></div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-                
-                {selectedOS === 'ios' && (
-                  <>
-                    {/* Power button */}
-                    <div className="absolute top-[80px] right-[-4px] w-[4px] h-[30px] bg-gray-600 rounded-r-md" />
-                    {/* Volume buttons */}
-                    <div className="absolute top-[70px] left-[-4px] w-[4px] h-[25px] bg-gray-600 rounded-l-md" />
-                    <div className="absolute top-[105px] left-[-4px] w-[4px] h-[25px] bg-gray-600 rounded-l-md" />
-                  </>
-                )}
-                
-                {selectedOS === 'android' && (
-                  <>
-                    {/* Power button */}
-                    <div className="absolute top-[90px] right-[-4px] w-[4px] h-[40px] bg-gray-600 rounded-r-md" />
-                    {/* Volume buttons */}
-                    <div className="absolute top-[140px] right-[-4px] w-[4px] h-[50px] bg-gray-600 rounded-r-md" />
-                  </>
-                )}
-                
-                {/* Screen content */}
-                <div className="w-full h-full bg-black rounded-[32px] overflow-hidden flex flex-col relative">
-                  {/* Phone screen content area */}
-                  {previewCode ? (
-                    <div className="flex-1">
-                      <CodeRenderer code={previewCode} platform={selectedOS as 'ios' | 'android'} />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center p-4 text-center h-full">
-                      {qrCodeImage ? (
-                        <>
-                          <img src={qrCodeImage} alt="QR Code" className="w-[150px] h-[150px] mb-4" />
-                          <div className="text-[10px] text-white/70 mb-1">Scan with your phone camera</div>
-                          <div className="flex items-center gap-1 text-[10px] text-white/50">
-                            <ExternalLink size={10} />
-                            <span>Open preview on your {selectedOS === 'ios' ? 'iPhone' : 'Android device'}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-[12px] text-white/50">
-                          Generate an app to see the preview
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-white/60">Model</p>
+              <p>{selectedDevice.name}</p>
             </div>
-
-            {/* Device info, Screens selection, and Features */}
-            <div className="flex-1 flex flex-col">
-              {/* Device info */}
-              <div className="mb-4">
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-medium text-white mb-2">Device Info</h3>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-white/70">
-                    <div>Model</div>
-                    <div className="text-white">{currentPhone.name}</div>
-                    <div>Resolution</div>
-                    <div className="text-white">{currentPhone.width}×{currentPhone.height}</div>
-                    <div>Year</div>
-                    <div className="text-white">{currentPhone.releaseYear}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Screen selection */}
-              <div className="mb-4">
-                <Label className="text-xs text-white/70 mb-2 block">Screens</Label>
-                <div className="flex flex-wrap gap-2">
-                  {screenNames.map((screenName) => (
-                    <button
-                      key={screenName}
-                      className={`px-3 py-1.5 text-xs rounded-md ${
-                        currentScreen === screenName 
-                          ? 'bg-primary text-white' 
-                          : 'bg-white/10 text-white/70 hover:bg-white/20'
-                      }`}
-                      onClick={() => setCurrentScreen(screenName)}
-                    >
-                      {screenName}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Features section - only show if we have real features */}
-              {implementedFeatures.length > 0 && (
-                <div className="mt-4">
-                  <div className="mb-2">
-                    <h3 className="text-sm font-medium text-white">Features in {getAppNameFromCode()}</h3>
-                    <p className="text-xs text-white/60">Your app includes the following implemented features.</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mt-3">
-                    {implementedFeatures.map((feature, index) => (
-                      <div 
-                        key={feature}
-                        className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3"
-                      >
-                        <div className="flex mb-1.5 items-center gap-2">
-                          <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                          <h4 className="text-xs font-medium text-white">{feature}</h4>
-                        </div>
-                        <p className="text-[11px] text-white/70 leading-tight">{getFeatureDescription(feature)}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div>
+              <p className="text-white/60">Resolution</p>
+              <p>{selectedDevice.width}×{selectedDevice.height}</p>
+            </div>
+            <div>
+              <p className="text-white/60">Year</p>
+              <p>{selectedDevice.year}</p>
+            </div>
+            <div>
+              <p className="text-white/60">Platform</p>
+              <p>{selectedDevice.platform === 'ios' ? 'iOS' : 'Android'}</p>
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Screen selector */}
+      {screens.length > 0 && (
+        <div className="mb-4 overflow-auto">
+          <h3 className="text-sm font-medium mb-2 text-white/80">Screens</h3>
+          <div className="flex gap-2 flex-wrap">
+            {screens.map((screen, index) => (
+              <button
+                key={index}
+                onClick={() => setSelectedScreen(screen)}
+                className={`px-3 py-1.5 text-sm rounded-full ${
+                  selectedScreen === screen
+                    ? 'bg-white/10 text-white'
+                    : 'bg-white/5 text-white/70 hover:bg-white/10'
+                }`}
+              >
+                {screen.replace(/Screen|View|Page/g, '')}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Phone device frame */}
+      <div className="flex-1 flex items-center justify-center">
+        <div 
+          className={`relative border-8 ${
+            selectedPlatform === 'ios' ? 'rounded-[40px] border-gray-800' : 'rounded-[28px] border-gray-700'
+          } overflow-hidden transition-all shadow-xl`}
+          style={{
+            width: `${selectedDevice.width * 0.22}px`,
+            height: `${selectedDevice.height * 0.22}px`,
+            maxHeight: '90%',
+          }}
+        >
+          {/* Notch for iOS devices */}
+          {selectedPlatform === 'ios' && (
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[70px] h-[18px] bg-black rounded-b-xl z-10"></div>
+          )}
+          
+          {/* Phone content */}
+          <div className="w-full h-full overflow-hidden bg-gray-100">
+            {previewCode ? (
+              <CodeRenderer code={previewCode} platform={selectedPlatform} />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full bg-gray-100 p-4">
+                <div className="animate-pulse flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 bg-gray-300 rounded-full mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Home indicator for modern iOS devices */}
+          {selectedPlatform === 'ios' && selectedDevice.year >= 2022 && (
+            <div className="absolute bottom-1.5 left-1/2 transform -translate-x-1/2 w-[60px] h-[4px] bg-gray-800 rounded-full"></div>
+          )}
+          
+          {/* Android navigation buttons */}
+          {selectedPlatform === 'android' && (
+            <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-6 py-1">
+              <div className="w-4 h-4 border-2 border-gray-700 rounded-sm"></div>
+              <div className="w-4 h-4 border-2 border-gray-700 rounded-full"></div>
+              <div className="w-4 h-4 border-2 border-gray-700 transform rotate-45"></div>
+            </div>
+          )}
+        </div>
       </div>
+      
+      {/* QR Code section (hidden for now) */}
+      {false && qrCodeUrl && (
+        <div className="mt-4 p-4 bg-white/5 rounded-lg">
+          <h3 className="text-sm font-medium mb-2">Test on your device</h3>
+          <div className="flex items-center gap-4">
+            <div className="bg-white p-2 rounded-md">
+              {/* QR Code image would go here */}
+              <div className="w-24 h-24 bg-white"></div>
+            </div>
+            <div>
+              <p className="text-sm text-white/80 mb-1">Scan with your phone camera</p>
+              <p className="text-xs text-white/60">or <a href={qrCodeUrl} className="underline">open this link</a></p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
