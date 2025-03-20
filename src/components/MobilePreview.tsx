@@ -7,6 +7,33 @@ import QRCode from 'qrcode';
 import CodeRenderer from './CodeRenderer';
 import { generateDemoFeatures } from '@/services/CodeParserService';
 
+// Feature description helper function
+const getFeatureDescription = (feature: string): string => {
+  const featureText = feature.toLowerCase();
+  
+  if (featureText.includes('auth') || featureText.includes('login') || featureText.includes('user')) {
+    return 'Secure user authentication and profile management.';
+  } else if (featureText.includes('notification') || featureText.includes('alert')) {
+    return 'Real-time notifications to keep users engaged.';
+  } else if (featureText.includes('data') || featureText.includes('sync') || featureText.includes('storage')) {
+    return 'Seamless data synchronization across devices.';
+  } else if (featureText.includes('share') || featureText.includes('social')) {
+    return 'Integrated social sharing capabilities.';
+  } else if (featureText.includes('offline')) {
+    return 'Full functionality even without internet connection.';
+  } else if (featureText.includes('camera') || featureText.includes('photo')) {
+    return 'Capture and manage photos within the app.';
+  } else if (featureText.includes('location') || featureText.includes('map')) {
+    return 'Location-based features and mapping capabilities.';
+  } else if (featureText.includes('payment') || featureText.includes('purchase')) {
+    return 'Secure in-app payment processing.';
+  } else if (featureText.includes('chart') || featureText.includes('graph')) {
+    return 'Data visualization with interactive charts.';
+  } else {
+    return 'This feature enhances your app functionality.';
+  }
+};
+
 interface MobilePreviewProps {
   qrCodeUrl?: string;
   previewCode?: string;

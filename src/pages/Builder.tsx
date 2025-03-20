@@ -112,15 +112,16 @@ Let's start by setting up the project structure and implementing the core featur
       const aiMessages = [
         { 
           role: "system", 
-          content: `You are WingPilot, an AI assistant that helps users build mobile apps. The user is building an app called "${generatedApp.appName}" with the description: "${generatedApp.description}". The app has these features: ${generatedApp.features.join(", ")}. Provide helpful, concise responses to their questions about app development.` 
+          content: `You are WingPilot, an AI assistant that helps users build mobile apps. The user is building an app called "${generatedApp.appName}" with the description: "${generatedApp.description}". The app has these features: ${generatedApp.features ? generatedApp.features.join(", ") : "No features specified yet"}. Provide helpful, concise responses to their questions about app development.` 
         },
         ...messages.map(m => ({ role: m.role === 'system' ? 'assistant' : m.role, content: m.content })),
         { role: "user", content: text }
       ];
       
       // Call Gemini API
-      import('@/services/LLMService').then(({ callOpenRouter }) => {
-        callOpenRouter(aiMessages, generatedApp.currentModel?.id || 'gemini-pro')
+      import('@/services/LLMService').then(({ callOpenRouter, useLLMModel }) => {
+        const { currentModel } = useLLMModel();
+        callOpenRouter(aiMessages, currentModel.id)
           .then(response => {
             const aiResponse = response.choices[0].message.content;
             
@@ -151,7 +152,7 @@ Let's start by setting up the project structure and implementing the core featur
               ...prev,
               { 
                 role: 'system', 
-                content: `I'll help you build a ${appData.appName}. Let me first analyze what features we'll need and create a roadmap for development. I'll start by setting up the basic structure with React Native and Expo.\n\nHere are the key features I'll implement:\n${appData.features.map(feature => `- ${typeof feature === 'object' ? feature.name || JSON.stringify(feature) : feature}`).join('\n')}` 
+                content: `I'll help you build a ${appData.appName}. Let me first analyze what features we'll need and create a roadmap for development. I'll start by setting up the basic structure with React Native and Expo.\n\nHere are the key features I'll implement:\n${appData.features ? appData.features.map(feature => `- ${typeof feature === 'object' ? feature.name || JSON.stringify(feature) : feature}`).join('\n') : "Let's define some features!"}` 
               }
             ];
           });

@@ -1,9 +1,17 @@
+
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { callOpenRouter, useLLMModel } from '@/services/LLMService';
 
 interface ProjectFile {
   path: string;
   content: string;
+}
+
+interface AppConcept {
+  appName: string;
+  description: string;
+  features: string[];
 }
 
 export const createProjectFiles = async (
@@ -89,11 +97,12 @@ export const createProjectFiles = async (
   });
   
   // Create README.md
+  const appDescription = "A mobile application built with React Native";
   files.push({
     path: 'README.md',
     content: `# ${appName}
 
-${appConcept.description}
+${appDescription}
 
 ## Features
 
@@ -145,6 +154,71 @@ export const downloadProject = async (
   saveAs(zipUrl, `${appName.toLowerCase().replace(/\s+/g, '-')}.zip`);
 };
 
+// Helper function to generate app concept
+const generateAppConcept = async (prompt: string): Promise<AppConcept> => {
+  const { currentModel } = useLLMModel();
+  
+  const messages = [
+    {
+      role: "system",
+      content: `You are an expert mobile app developer. Create a detailed app concept based on the user's prompt.
+      
+      Your response should be in JSON format with these keys:
+      - appName: A catchy, relevant name for the app
+      - description: 1-2 sentence description of what the app does
+      - features: Array of strings listing 3-7 core features the app should have`
+    },
+    {
+      role: "user",
+      content: prompt
+    }
+  ];
+
+  try {
+    const response = await callOpenRouter(messages, currentModel.id);
+    const content = response?.choices?.[0]?.message?.content || '';
+    
+    // Try to extract JSON from the response
+    try {
+      const jsonMatch = content.match(/```json([\s\S]*?)```/) || content.match(/({[\s\S]*})/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[1].trim());
+      } else {
+        return JSON.parse(content);
+      }
+    } catch (error) {
+      // If parsing fails, create a basic structure
+      console.error('Error parsing app concept:', error);
+      return {
+        appName: prompt.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('') + 'App',
+        description: `A mobile app based on "${prompt}"`,
+        features: ['User authentication', 'Data storage', 'Notifications']
+      };
+    }
+  } catch (error) {
+    console.error('Error generating app concept:', error);
+    // Create a fallback response
+    return {
+      appName: prompt.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('') + 'App',
+      description: `A mobile app based on "${prompt}"`,
+      features: ['User authentication', 'Data storage', 'Notifications']
+    };
+  }
+};
+
+// Helper function to generate app files
+const generateAppFiles = async (appConcept: AppConcept, enhancedFeatures: any[]): Promise<any[]> => {
+  // This would be implemented to generate app files based on the concept
+  return [];
+};
+
+// Generate QR code for app preview
+const generateQRCode = async (appName: string): Promise<string> => {
+  // This would generate a QR code for app preview
+  // For now, we'll return a placeholder URL
+  return `https://example.com/preview/${appName.toLowerCase().replace(/\s+/g, '-')}`;
+};
+
 // Enhance the generateApp function to create a complete, functional app
 export const generateApp = async (prompt: string): Promise<any> => {
   try {
@@ -186,6 +260,8 @@ export const generateApp = async (prompt: string): Promise<any> => {
 
 // New function to generate detailed implementation for each feature
 const generateFeatureImplementation = async (feature: string, appName: string): Promise<any> => {
+  const { currentModel } = useLLMModel();
+  
   const messages = [
     {
       role: "system",
@@ -212,9 +288,9 @@ Your response should be in JSON format with these keys:
     }
   ];
 
-  const response = await callOpenRouter(messages, currentModel.id);
-  
   try {
+    const response = await callOpenRouter(messages, currentModel.id);
+    
     // Extract JSON from the response
     const content = response?.choices?.[0]?.message?.content || '';
     const jsonMatch = content.match(/```json([\s\S]*?)```/) || content.match(/({[\s\S]*})/);
@@ -240,7 +316,9 @@ Your response should be in JSON format with these keys:
 };
 
 // New function to generate complete app code with all features implemented
-const generateCompleteAppCode = async (appConcept: any, enhancedFeatures: any[]): Promise<string> => {
+const generateCompleteAppCode = async (appConcept: AppConcept, enhancedFeatures: any[]): Promise<string> => {
+  const { currentModel } = useLLMModel();
+  
   const featureSummaries = enhancedFeatures.map(f => 
     `- ${f.name}: ${f.description?.substring(0, 100)}...`
   ).join('\n');
@@ -286,16 +364,66 @@ IMPLEMENT EVERYTHING with real, working code.`
     }
   ];
 
-  const response = await callOpenRouter(messages, currentModel.id);
-  
-  // Extract code from the response
-  const content = response?.choices?.[0]?.message?.content || '';
-  const codeMatch = content.match(/```(?:jsx|javascript|js|tsx|ts)([\s\S]*?)```/);
-  
-  if (codeMatch) {
-    return codeMatch[1].trim();
-  } else {
-    // If no code block is found, use the entire content
-    return content;
+  try {
+    const response = await callOpenRouter(messages, currentModel.id);
+    
+    // Extract code from the response
+    const content = response?.choices?.[0]?.message?.content || '';
+    const codeMatch = content.match(/```(?:jsx|javascript|js|tsx|ts)([\s\S]*?)```/);
+    
+    if (codeMatch) {
+      return codeMatch[1].trim();
+    } else {
+      // If no code block is found, use the entire content
+      return content;
+    }
+  } catch (error) {
+    console.error('Error generating complete app code:', error);
+    return `
+// Sample React Native App for ${appConcept.appName}
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+export default function App() {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>${appConcept.appName}</Text>
+      <Text style={styles.description}>${appConcept.description}</Text>
+      <Text style={styles.subtitle}>Features:</Text>
+      ${appConcept.features.map(f => `<Text style={styles.feature}>${f}</Text>`).join('\n      ')}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  feature: {
+    fontSize: 14,
+    marginBottom: 5,
+  },
+});
+`;
   }
 };

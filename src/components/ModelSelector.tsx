@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Brain } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useLLMModel, llmModels } from "@/services/LLMService";
+import { useLLMModel, llmModels, LLMModelType } from "@/services/LLMService";
 
 interface ModelSelectorProps {
   className?: string;
@@ -18,7 +19,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ className }) => {
       </div>
       <Select
         value={selectedModel}
-        onValueChange={(value) => selectModel(value as 'gemini-pro' | 'gemini-pro-vision' | 'gemini-ultra')}
+        onValueChange={(value) => selectModel(value as LLMModelType)}
       >
         <SelectTrigger className="h-8 w-[140px] bg-white/5 border-none text-white text-xs">
           <SelectValue placeholder="Select model" />
