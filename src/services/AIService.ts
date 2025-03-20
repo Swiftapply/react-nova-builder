@@ -1,5 +1,7 @@
+
 import { useState } from 'react';
 import { LLMModelType, useLLMModel, callOpenRouter } from './LLMService';
+import { parseReactNativeCode, generateDemoFeatures } from './CodeParserService';
 
 // Types for AI service responses
 export interface AIResponse {
@@ -23,6 +25,7 @@ export interface GeneratedAppData {
   currentStep: number;
   qrCodeUrl?: string;
   previewCode?: string;
+  currentModel?: { id: string; name: string; provider: string };
 }
 
 // Enhance the app generation steps to include more detailed implementation phases
@@ -142,7 +145,8 @@ export const useAIService = () => {
         steps: initialSteps,
         currentStep: 1, // Architecture Planning is in progress
         qrCodeUrl: expoQRCodeUrl,
-        previewCode: await generatePreviewCode(prompt, appConcept)
+        previewCode: await generatePreviewCode(prompt, appConcept),
+        currentModel: currentModel
       };
       
       setGeneratedApp(appData);
@@ -184,16 +188,19 @@ The app has these features: ${updatedApp.features.join(", ")}.
 
 You are now working on the step: "${updatedApp.steps[currentStepIndex].title}" - ${updatedApp.steps[currentStepIndex].description}.
 
-For this step, provide:
-1. A detailed explanation of what needs to be implemented
-2. Specific code examples showing how to implement key parts of this step
-3. Best practices and recommendations for this aspect of development
-4. Common pitfalls to avoid
-5. Links to relevant documentation or libraries that would be helpful
+Your task is to generate a complete, fully functional React Native code file (or screen component) that implements part of this app functionality. The code should:
 
-Format your response as markdown with clear sections and code examples.` 
+1. Be complete and ready to run in an Expo project
+2. Include all necessary imports
+3. Implement real functionality, not just UI mockups
+4. Use modern React Native patterns and components
+5. Include explanatory comments
+6. Handle basic error cases
+7. Use proper TypeScript types
+
+Format your response as a single continuous code file wrapped in markdown code blocks.` 
         },
-        { role: "user", content: `Help me implement the ${updatedApp.steps[currentStepIndex].title} step for my ${updatedApp.appName} app. I need detailed guidance and code examples.` }
+        { role: "user", content: `Generate complete React Native code for a screen or component for my ${updatedApp.appName} app, focusing on ${updatedApp.steps[currentStepIndex].title} functionality.` }
       ];
       
       // Make API call
@@ -204,9 +211,21 @@ Format your response as markdown with clear sections and code examples.`
         throw new Error("API response is missing expected data structure");
       }
       
-      // Update the step with the response content
-      updatedApp.steps[currentStepIndex].output = response.choices[0].message.content;
+      // Extract code from the response
+      const responseText = response.choices[0].message.content;
+      const codeMatch = responseText.match(/```(?:jsx|js|tsx|ts)?([\s\S]*?)```/);
+      
+      // Update the step with the response content and code
+      updatedApp.steps[currentStepIndex].output = responseText;
       updatedApp.steps[currentStepIndex].status = 'completed';
+      
+      // Update preview code if valid code was generated
+      if (codeMatch) {
+        const extractedCode = codeMatch[1].trim();
+        if (extractedCode.length > 200) {
+          updatedApp.previewCode = extractedCode;
+        }
+      }
       
       // Move to the next step if not the last one
       if (currentStepIndex < updatedApp.steps.length - 1) {
@@ -345,183 +364,16 @@ Design Requirements:
    - Pull-to-refresh with physics-based animations and haptic feedback
    - Rich interactive states with scale transforms and color transitions
 
-3. 2024 Color Philosophy:
-   - Primary: Rich, deep backgrounds (#0F172A, #18181B) for dark mode with subtle texture
-   - Light mode: Clean whites with subtle tints (#F8FAFC, #F1F5F9)
-   - Accent: Vibrant gradients and duotones (#6366F1→#8B5CF6, #EC4899→#F43F5E)
-   - Multi-layered gradients with depth and dimension (opacity 40-90%)
-   - Dark mode with proper WCAG 2.1 contrast ratios and thoughtful color mapping
-   - High contrast for accessibility (minimum 4.5:1 for text, 3:1 for UI elements)
-   - Strategic use of opacity, blur, and color for visual hierarchy
-
-4. Technical Requirements:
-   - Use React Native Paper for UI components with this implementation pattern:
-     \`\`\`
-     import { Provider as PaperProvider, DefaultTheme, Button, Card, Title, Paragraph, Avatar, Appbar, FAB, ActivityIndicator } from 'react-native-paper';
-     
-     // Create a custom theme with 2024 design language colors
-     const theme = {
-       ...DefaultTheme,
-       colors: {
-         ...DefaultTheme.colors,
-         primary: '#6366F1',
-         accent: '#8B5CF6',
-         tertiary: '#EC4899',
-         background: '#FFFFFF',
-         surface: '#F8FAFC',
-         surfaceVariant: '#F1F5F9',
-         text: '#0F172A',
-         onSurface: '#334155',
-         disabled: 'rgba(15, 23, 42, 0.38)',
-         placeholder: 'rgba(15, 23, 42, 0.54)',
-         backdrop: 'rgba(15, 23, 42, 0.4)',
-         elevation: {
-           level0: 'transparent',
-           level1: 'rgba(15, 23, 42, 0.05)',
-           level2: 'rgba(15, 23, 42, 0.08)',
-           level3: 'rgba(15, 23, 42, 0.11)',
-         },
-       },
-       roundness: 16,
-       animation: {
-         scale: 1.0,
-       },
-     };
-     
-     // Wrap your app with PaperProvider
-     <PaperProvider theme={theme}>
-       <App />
-     </PaperProvider>
-     
-     // Use components like this
-     <Card style={{ 
-       borderRadius: 20, 
-       marginVertical: 16,
-       overflow: 'hidden',
-       elevation: 2,
-       backgroundColor: theme.colors.surface,
-       borderColor: 'rgba(15, 23, 42, 0.08)',
-       borderWidth: 1,
-     }}>
-       <Card.Cover 
-         source={{ uri: 'https://picsum.photos/700' }} 
-         style={{ height: 180 }}
-       />
-       <Card.Content style={{ padding: 20 }}>
-         <Title style={{ fontSize: 20, fontWeight: '700', marginBottom: 10, letterSpacing: -0.5 }}>Card Title</Title>
-         <Paragraph style={{ fontSize: 15, lineHeight: 22, opacity: 0.8, letterSpacing: -0.2 }}>Card content with proper line height and opacity for visual hierarchy.</Paragraph>
-       </Card.Content>
-       <Card.Actions style={{ padding: 16, justifyContent: 'flex-end' }}>
-         <Button mode="text" style={{ borderRadius: 12, marginRight: 12 }} labelStyle={{ fontSize: 14, fontWeight: '600', letterSpacing: -0.3 }}>Cancel</Button>
-         <Button 
-           mode="contained" 
-           style={{ borderRadius: 12, paddingHorizontal: 20, elevation: 0 }}
-           labelStyle={{ fontSize: 14, fontWeight: '600', letterSpacing: -0.3 }}
-           contentStyle={{ height: 40 }}
-         >Confirm</Button>
-       </Card.Actions>
-     </Card>
-     \`\`\`
-   - Set up React Navigation v6 with native stack and modern styling:
-     \`\`\`
-     const Stack = createNativeStackNavigator();
-     
-     function App() {
-       return (
-         <NavigationContainer>
-           <Stack.Navigator 
-             initialRouteName="Home" 
-             screenOptions={{
-               headerStyle: { 
-                 backgroundColor: '#0F172A',
-                 elevation: 0, // Android
-                 shadowOpacity: 0, // iOS
-               },
-               headerTintColor: '#fff',
-               headerTitleStyle: { 
-                 fontWeight: '700',
-                 fontSize: 18,
-                 letterSpacing: -0.5,
-               },
-               contentStyle: { 
-                 backgroundColor: '#18181B' 
-               },
-               headerBackVisible: false,
-               headerBackTitleVisible: false,
-               headerShadowVisible: false,
-               animation: 'slide_from_right',
-             }}
-           >
-             <Stack.Screen 
-               name="Home" 
-               component={HomeScreen} 
-               options={{
-                 title: 'Home',
-                 headerLargeTitle: true, // iOS only
-               }}
-             />
-             <Stack.Screen name="Details" component={DetailsScreen} />
-           </Stack.Navigator>
-         </NavigationContainer>
-       );
-     }
-     \`\`\`
-   - Use React Native Reanimated 3 for fluid animations:
-     \`\`\`
-     // Fade in animation for list items
-     <Animated.View
-       entering={FadeIn.duration(400).delay(index * 100)}
-       exiting={FadeOut.duration(300)}
-       style={styles.listItem}
-     >
-       <Text>List Item {index}</Text>
-     </Animated.View>
-     \`\`\`
-   - Use React Native Linear Gradient for modern gradients:
-     \`\`\`
-     <LinearGradient
-       colors={['#6366F1', '#8B5CF6', '#EC4899']}
-       start={{ x: 0, y: 0 }}
-       end={{ x: 1, y: 1 }}
-       style={{ 
-         borderRadius: 24, 
-         padding: 24,
-         shadowColor: '#6366F1',
-         shadowOffset: { width: 0, height: 8 },
-         shadowOpacity: 0.4,
-         shadowRadius: 16,
-         elevation: 8,
-         borderWidth: 1,
-         borderColor: 'rgba(255, 255, 255, 0.1)',
-       }}
-     >
-       <Text style={{ 
-         color: 'white', 
-         fontWeight: '700',
-         fontSize: 18,
-         letterSpacing: -0.5,
-         textShadow: '0 1px 3px rgba(0,0,0,0.2)',
-       }}>Gradient Content</Text>
-     </LinearGradient>
-     \`\`\`
+3. Technical Requirements:
+   - Use React Native Paper for UI components
+   - Set up React Navigation v6 with native stack 
+   - Use React Native Reanimated 3 for fluid animations
+   - Use React Native Linear Gradient for modern gradients
    - Implement proper TypeScript types for all components and props
    - Use React Native Vector Icons (preferably Phosphor or Lucide)
    - Use SafeAreaView and modern Flexbox patterns with consistent spacing
 
-Required imports:
-\`\`\`
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Provider as PaperProvider, DefaultTheme, Button, Card, Title, Paragraph, Avatar, Appbar, FAB, ActivityIndicator, Divider } from 'react-native-paper';
-import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
-import LinearGradient from 'react-native-linear-gradient';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
-import { Feather } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
-\`\`\`
-
-Focus on creating a UI that feels ultra-premium, cutting-edge, and delightful to use. Take inspiration from the most acclaimed 2024 apps like Linear, Stripe, Arc Browser, and modern fintech apps. Create a design system with consistent spacing, typography, and color application. Use layered shadows, subtle blurs, and micro-interactions to create depth and tactility. Ensure all interactive elements have rich touch states with spring animations. Incorporate subtle motion design principles throughout the interface. The final result should feel like a polished, production-ready app that follows the latest design trends of 2024.
+Focus on creating a UI that feels ultra-premium, cutting-edge, and delightful to use. Create a design system with consistent spacing, typography, and color application. Use layered shadows, subtle blurs, and micro-interactions to create depth and tactility. Ensure all interactive elements have rich touch states with spring animations. The final result should feel like a polished, production-ready app.
 
 Your response MUST be ONLY the code wrapped in triple backticks with the language specified as jsx. Do not include any explanations or text outside the code block.` 
         },
@@ -569,7 +421,8 @@ Your response MUST be ONLY the code wrapped in triple backticks with the languag
     generatedApp,
     generateApp,
     updateAppProgress,
-    selectedModel
+    selectedModel,
+    setGeneratedApp
   };
 };
 
