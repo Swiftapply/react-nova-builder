@@ -55,7 +55,7 @@ const Builder = () => {
               content: `I'll help you build a fully functional ${appData.appName} app. Here's my development plan:
 
 1. **App Concept & Requirements Analysis**
-   - Core features: ${appData.features.map(feature => `\n   - ${typeof feature === 'object' && feature !== null ? feature.name || JSON.stringify(feature || {}) : (feature || '')}`).join('')}
+   - Core features: ${appData.features.map(feature => `\n   - ${typeof feature === 'object' ? feature.name || JSON.stringify(feature || {}) : (feature || '')}`).join('')}
    - Target users: ${appData.description.includes('for') ? appData.description.split('for')[1].trim() : 'Mobile app users'}
 
 2. **Technical Architecture**
@@ -152,7 +152,7 @@ Let's start by setting up the project structure and implementing the core featur
               ...prev,
               { 
                 role: 'system', 
-                content: `I'll help you build a ${appData.appName}. Let me first analyze what features we'll need and create a roadmap for development. I'll start by setting up the basic structure with React Native and Expo.\n\nHere are the key features I'll implement:\n${appData.features ? appData.features.map(feature => `- ${typeof feature === 'object' && feature !== null ? feature.name || JSON.stringify(feature) : feature}`).join('\n') : "Let's define some features!"}` 
+                content: `I'll help you build a ${appData.appName}. Let me first analyze what features we'll need and create a roadmap for development. I'll start by setting up the basic structure with React Native and Expo.\n\nHere are the key features I'll implement:\n${appData.features ? appData.features.map(feature => `- ${typeof feature === 'object' ? feature.name || JSON.stringify(feature) : feature}`).join('\n') : "Let's define some features!"}` 
               }
             ];
           });
@@ -255,7 +255,7 @@ Let's start by setting up the project structure and implementing the core featur
                         appName={generatedApp.appName}
                         onFeatureClick={(feature) => {
                           // Add feature to the chat as a suggestion
-                          if (typeof feature === 'string') {
+                          if (feature) {
                             handleMessageSent(`Can you tell me more about the ${feature} feature?`);
                           }
                         }}
