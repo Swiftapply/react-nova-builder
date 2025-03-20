@@ -1,20 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import CodeRenderer from './CodeRenderer';
-import { Smartphone, Phone, Info, X } from 'lucide-react';
+import { PhoneIphone, Smartphone, Info, X } from 'lucide-react';
 import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
-import {
+  TooltipTrigger,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@/components/ui/select';
+} from '@/components/ui';
 
 interface MobilePreviewProps {
   previewCode?: string;
@@ -117,7 +115,7 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ previewCode, qrCodeUrl })
               selectedPlatform === 'ios' ? 'bg-white/10 text-white' : 'text-white/60'
             }`}
           >
-            <Phone className="w-4 h-4" />
+            <PhoneIphone className="w-4 h-4" />
             <span>iOS</span>
           </button>
           <button
