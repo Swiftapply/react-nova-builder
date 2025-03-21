@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import CodeRenderer from './CodeRenderer';
 import { Phone, Smartphone, Info, X } from 'lucide-react';
@@ -93,7 +92,7 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({
   qrCodeUrl,
   detectedScreens = [] 
 }) => {
-  const [selectedPlatform, setSelectedPlatform] = useState('ios');
+  const [selectedPlatform, setSelectedPlatform] = useState<'ios' | 'android'>('ios');
   const [selectedDeviceId, setSelectedDeviceId] = useState('iphone-15');
   const [showInfo, setShowInfo] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
