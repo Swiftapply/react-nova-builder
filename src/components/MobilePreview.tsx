@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import CodeRenderer from './CodeRenderer';
-import { Phone, Smartphone, Info, X } from 'lucide-react';
+import { Phone, Smartphone, Info, X, ChevronDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -94,7 +95,7 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({
 }) => {
   const [selectedPlatform, setSelectedPlatform] = useState<'ios' | 'android'>('ios');
   const [selectedDeviceId, setSelectedDeviceId] = useState('iphone-15');
-  const [showInfo, setShowInfo] = useState(false);
+  const [showInfo, setShowInfo] = useState(true);
   const [selectedScreen, setSelectedScreen] = useState<string | null>(null);
   const [isCodeLoading, setIsCodeLoading] = useState(false);
 
@@ -125,182 +126,144 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({
   }, [previewCode]);
 
   return (
-    <div className="flex flex-col h-full p-4">
-      <div className="flex justify-between mb-4">
-        <div className="flex items-center bg-white/5 rounded-lg p-0.5">
-          <button
+    <div className="flex flex-col h-full">
+      {/* Top navigation tabs */}
+      <div className="flex border-b border-white/10 bg-background">
+        <div className="flex-1 flex">
+          <button 
             onClick={() => setSelectedPlatform('ios')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
-              selectedPlatform === 'ios' ? 'bg-white/10 text-white' : 'text-white/60'
+            className={`px-6 py-2 text-sm font-medium ${
+              selectedPlatform === 'ios' ? 'bg-black text-white' : 'text-white/60 hover:text-white/80 hover:bg-white/5'
             }`}
           >
-            <Phone className="w-4 h-4" />
-            <span>iOS</span>
+            iOS
           </button>
-          <button
+          <button 
             onClick={() => setSelectedPlatform('android')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md ${
-              selectedPlatform === 'android' ? 'bg-white/10 text-white' : 'text-white/60'
+            className={`px-6 py-2 text-sm font-medium ${
+              selectedPlatform === 'android' ? 'bg-black text-white' : 'text-white/60 hover:text-white/80 hover:bg-white/5'
             }`}
           >
-            <Smartphone className="w-4 h-4" />
-            <span>Android</span>
+            Android
           </button>
-          
-          {/* Device selector moved below platform toggle */}
-          <div className="ml-3">
-            <Select value={selectedDeviceId} onValueChange={setSelectedDeviceId}>
-              <SelectTrigger className="w-[140px] h-9 bg-white/5 border-white/10 text-sm">
-                <SelectValue placeholder="Select device" />
-              </SelectTrigger>
-              <SelectContent>
-                {platformDevices.map((device) => (
-                  <SelectItem key={device.id} value={device.id}>
-                    {device.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button 
-                onClick={() => setShowInfo(!showInfo)}
-                className="p-1.5 rounded-md hover:bg-white/5 text-white/70"
-              >
-                <Info className="w-4 h-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Device information</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
 
-      {showInfo && (
-        <div className="bg-white/5 rounded-lg p-3 mb-4 text-sm">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-medium">Device Info</h3>
-            <button 
-              onClick={() => setShowInfo(false)}
-              className="p-1 hover:bg-white/10 rounded-md"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <p className="text-white/60">Model</p>
-              <p>{selectedDevice.name}</p>
+      {/* Device selector */}
+      <div className="px-4 py-2 border-b border-white/10 bg-black">
+        <Select value={selectedDeviceId} onValueChange={setSelectedDeviceId}>
+          <SelectTrigger className="w-full bg-black/90 border-0 focus:ring-0 text-white h-8">
+            <div className="flex items-center justify-between w-full">
+              <span>{selectedDevice.name} ({selectedDevice.year})</span>
+              <ChevronDown className="h-4 w-4 opacity-50" />
             </div>
-            <div>
-              <p className="text-white/60">Resolution</p>
-              <p>{selectedDevice.width}×{selectedDevice.height}</p>
-            </div>
-            <div>
-              <p className="text-white/60">Year</p>
-              <p>{selectedDevice.year}</p>
-            </div>
-            <div>
-              <p className="text-white/60">Platform</p>
-              <p>{selectedPlatform === 'ios' ? 'iOS' : 'Android'}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Only display screens section if there are detected screens */}
-      {detectedScreens && detectedScreens.length > 0 && (
-        <div className="mb-4 overflow-auto">
-          <h3 className="text-sm font-medium mb-2 text-white/80">Screens</h3>
-          <div className="flex gap-2 flex-wrap">
-            {detectedScreens.map((screen, index) => (
-              <button
-                key={index}
-                onClick={() => setSelectedScreen(screen)}
-                className={`px-3 py-1.5 text-sm rounded-full ${
-                  selectedScreen === screen
-                    ? 'bg-white/10 text-white'
-                    : 'bg-white/5 text-white/70 hover:bg-white/10'
-                }`}
-              >
-                {screen.replace(/Screen|View|Page/g, '')}
-              </button>
+          </SelectTrigger>
+          <SelectContent className="bg-black border border-white/10">
+            {platformDevices.map((device) => (
+              <SelectItem key={device.id} value={device.id} className="text-white hover:bg-white/10">
+                {device.name} ({device.year})
+              </SelectItem>
             ))}
-          </div>
-        </div>
-      )}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <div className="flex-1 flex items-center justify-center">
-        <div
-          className={`relative border-8 ${
-            selectedPlatform === 'ios'
-              ? 'rounded-[40px] border-gray-800'
-              : 'rounded-[28px] border-gray-700'
-          } overflow-hidden transition-all shadow-xl`}
-          style={{
-            width: `${selectedDevice.width * 0.22}px`,
-            height: `${selectedDevice.height * 0.22}px`,
-            maxHeight: '90%'
-          }}
-        >
-          {selectedPlatform === 'ios' && (
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[70px] h-[18px] bg-black rounded-b-xl z-10" />
-          )}
-          <div className="w-full h-full overflow-hidden bg-gray-100">
-            {isCodeLoading ? (
-              <div className="flex flex-col items-center justify-center h-full bg-gray-100 p-4">
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+      <div className="flex-1 flex">
+        {/* Phone preview area */}
+        <div className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+          <div
+            className="relative border-[12px] rounded-[40px] overflow-hidden shadow-2xl transition-all"
+            style={{
+              borderColor: '#000',
+              width: `${selectedDevice.width * 0.25}px`,
+              height: `${selectedDevice.height * 0.25}px`,
+              maxHeight: '90%'
+            }}
+          >
+            {/* Notch for iOS devices */}
+            {selectedPlatform === 'ios' && (
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[70px] h-[18px] bg-black rounded-b-xl z-10" />
+            )}
+            
+            <div className="w-full h-full overflow-hidden bg-black">
+              {isCodeLoading ? (
+                <div className="flex flex-col items-center justify-center h-full bg-black p-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                  <p className="mt-3 text-xs text-white/70">Loading preview...</p>
                 </div>
-                <p className="mt-3 text-sm text-gray-600">Loading preview...</p>
-              </div>
-            ) : previewCode ? (
-              <CodeRenderer code={previewCode} platform={selectedPlatform} />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full bg-gray-100 p-4">
-                <div className="animate-pulse flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 bg-gray-300 rounded-full mb-4" />
-                  <div className="h-4 bg-gray-300 rounded w-3/4 mb-2" />
-                  <div className="h-4 bg-gray-300 rounded w-1/2" />
+              ) : previewCode ? (
+                <CodeRenderer code={previewCode} platform={selectedPlatform} />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full bg-black p-4">
+                  <p className="text-xs text-white/70 text-center">Generate an app to see the preview</p>
                 </div>
+              )}
+            </div>
+            
+            {/* Home indicator for modern iOS devices */}
+            {selectedPlatform === 'ios' && selectedDevice.year >= 2022 && (
+              <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-[60px] h-[4px] bg-white/30 rounded-full" />
+            )}
+            
+            {/* Android navigation buttons */}
+            {selectedPlatform === 'android' && (
+              <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-6 py-1">
+                <div className="w-4 h-4 border-2 border-white/30 rounded-sm" />
+                <div className="w-4 h-4 border-2 border-white/30 rounded-full" />
+                <div className="w-4 h-4 border-2 border-white/30 transform rotate-45" />
               </div>
             )}
           </div>
-          {selectedPlatform === 'ios' && selectedDevice.year >= 2022 && (
-            <div className="absolute bottom-1.5 left-1/2 transform -translate-x-1/2 w-[60px] h-[4px] bg-gray-800 rounded-full" />
-          )}
-          {selectedPlatform === 'android' && (
-            <div className="absolute bottom-1 left-0 right-0 flex justify-center space-x-6 py-1">
-              <div className="w-4 h-4 border-2 border-gray-700 rounded-sm" />
-              <div className="w-4 h-4 border-2 border-gray-700 rounded-full" />
-              <div className="w-4 h-4 border-2 border-gray-700 transform rotate-45" />
+        </div>
+        
+        {/* Right panel with device info and screens */}
+        <div className="w-[320px] border-l border-white/10 flex flex-col">
+          {/* Device Info Panel */}
+          <div className="p-4 bg-black/70">
+            <h3 className="text-sm font-medium mb-3 text-white">Device Info</h3>
+            <div className="grid grid-cols-2 gap-y-2">
+              <div>
+                <p className="text-xs text-white/60">Model</p>
+                <p className="text-sm text-white">{selectedDevice.name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60">Resolution</p>
+                <p className="text-sm text-white">{selectedDevice.width}×{selectedDevice.height}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60">Year</p>
+                <p className="text-sm text-white">{selectedDevice.year}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60">Platform</p>
+                <p className="text-sm text-white">{selectedPlatform === 'ios' ? 'iOS' : 'Android'}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Only display screens section if there are detected screens */}
+          {detectedScreens && detectedScreens.length > 0 && (
+            <div className="p-4 border-t border-white/10">
+              <h3 className="text-sm font-medium mb-3 text-white">Screens</h3>
+              <div className="flex flex-wrap gap-2">
+                {detectedScreens.map((screen, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedScreen(screen)}
+                    className={`px-3 py-1.5 text-xs rounded-full ${
+                      selectedScreen === screen
+                        ? 'bg-white/10 text-white'
+                        : 'bg-white/5 text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    {screen.replace(/Screen|View|Page/g, '')}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
       </div>
-      
-      {false && qrCodeUrl && (
-        <div className="mt-4 p-4 bg-white/5 rounded-lg">
-          <h3 className="text-sm font-medium mb-2">Test on your device</h3>
-          <div className="flex items-center gap-4">
-            <div className="bg-white p-2 rounded-md">
-              {/* QR Code placeholder */}
-              <div className="w-24 h-24 bg-white" />
-            </div>
-            <div>
-              <p className="text-sm text-white/80 mb-1">Scan with your phone camera</p>
-              <p className="text-xs text-white/60">
-                or <a href={qrCodeUrl} className="underline">open this link</a>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

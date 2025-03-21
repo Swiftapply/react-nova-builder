@@ -80,13 +80,13 @@ const Builder = () => {
             ...prev,
             { 
               role: 'system', 
-              content: `I'll help you build a fully functional ${appData.appName} app. Here's my development plan:
+              content: `I'll help you build a fully functional ${appData.appName || 'App'} app. Here's my development plan:
 
 1. **App Concept & Requirements Analysis**
    - Core features: ${appData.features?.map(feature => 
-     `\n   - ${typeof feature === 'object' 
+     feature ? `\n   - ${typeof feature === 'object' 
        ? (feature?.name || JSON.stringify(feature || {})) 
-       : (feature || '')}`
+       : (feature || '')}` : ''
    ).join('') || 'To be determined'}
    - Target users: ${appData.description?.includes('for') 
      ? appData.description.split('for')[1].trim() 
@@ -146,7 +146,9 @@ Let's start by setting up the project structure and implementing the core featur
       const aiMessages = [
         { 
           role: "system", 
-          content: `You are WingPilot, an AI assistant that helps users build mobile apps. The user is building an app called "${generatedApp.appName || 'Mobile App'}" with the description: "${generatedApp.description || 'A mobile application'}". The app has these features: ${generatedApp.features ? generatedApp.features.map(f => typeof f === 'object' ? (f?.name || JSON.stringify(f || {})) : (f || '')).join(", ") : "No features specified yet"}. Provide helpful, concise responses to their questions about app development.` 
+          content: `You are WingPilot, an AI assistant that helps users build mobile apps. The user is building an app called "${generatedApp.appName || 'Mobile App'}" with the description: "${generatedApp.description || 'A mobile application'}". The app has these features: ${generatedApp.features ? generatedApp.features.map(f => 
+            f ? (typeof f === 'object' ? (f?.name || JSON.stringify(f || {})) : (f || '')) : ''
+          ).join(", ") : "No features specified yet"}. Provide helpful, concise responses to their questions about app development.` 
         },
         ...messages.map(m => ({ role: m.role === 'system' ? 'assistant' : m.role, content: m.content })),
         { role: "user", content: text }
@@ -195,7 +197,7 @@ Let's start by setting up the project structure and implementing the core featur
 
 I'll start by designing the UI and core screens for your ${appData.appName || 'Mobile App'} app. Here are the key features I'll implement:
 ${appData.features ? appData.features.map(feature => 
-  `- ${typeof feature === 'object' ? (feature?.name || JSON.stringify(feature || {})) : (feature || '')}`
+  feature ? `- ${typeof feature === 'object' ? (feature?.name || JSON.stringify(feature || {})) : (feature || '')}` : ''
 ).join('\n') : "Let's define some features!"}`
                 }
               ];
