@@ -327,7 +327,7 @@ ${appData.features ? appData.features.map(feature =>
                   <div className="border-t border-white/5 mt-4">
                     <ErrorBoundary fallback={<div className="p-4">Unable to display features</div>}>
                       <FeatureShowcase 
-                        features={generatedApp.features} 
+                        features={generatedApp.features.filter(f => f !== null)} 
                         appName={generatedApp.appName || ""}
                         onFeatureClick={(featureName) => {
                           // Add feature to the chat as a suggestion
