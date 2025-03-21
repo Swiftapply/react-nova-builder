@@ -142,13 +142,16 @@ export const callMistralAPI = async (
   messages: Array<{ role: string; content: string }>,
   modelId: string
 ): Promise<any> => {
-  const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY || '';
+  // Hard-coded Mistral API key
+  const MISTRAL_API_KEY = 'bFqVXB13fwyBboxV6juvioAK1hZBUIuv';
   
   if (!MISTRAL_API_KEY) {
     throw new Error('Mistral API key is not configured');
   }
 
   try {
+    console.log(`Calling Mistral API with model: ${modelId}`);
+    
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {

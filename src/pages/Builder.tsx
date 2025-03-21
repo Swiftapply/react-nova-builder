@@ -20,6 +20,7 @@ const Builder = () => {
   const [currentTab, setCurrentTab] = useState<'preview' | 'code'>('preview');
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'system'; content: string }>>([]);
   const { isLoading, setIsLoading, error, generatedApp, generateApp, updateAppProgress, setGeneratedApp } = useAIService();
+  const [detectedScreens, setDetectedScreens] = useState<string[]>([]);
 
   // Log state changes for debugging
   useEffect(() => {
@@ -32,6 +33,33 @@ const Builder = () => {
 
   // Track if initialization has been done
   const [initialized, setInitialized] = useState(false);
+
+  // Function to extract screens from generated code
+  const extractScreensFromCode = useCallback((code: string | undefined) => {
+    if (!code) return [];
+    
+    // Try to extract screen names using common patterns in React Native code
+    const screenNameRegex = /(const|function)\s+([A-Z][a-zA-Z0-9]*(?:Screen|View|Page))/g;
+    const screens: string[] = [];
+    let match;
+    
+    while ((match = screenNameRegex.exec(code)) !== null) {
+      if (match[2] && !screens.includes(match[2])) {
+        screens.push(match[2]);
+      }
+    }
+    
+    console.log('Detected screens:', screens);
+    return screens;
+  }, []);
+
+  // Update detected screens when code changes
+  useEffect(() => {
+    if (generatedApp?.previewCode) {
+      const screens = extractScreensFromCode(generatedApp.previewCode);
+      setDetectedScreens(screens);
+    }
+  }, [generatedApp?.previewCode, extractScreensFromCode]);
 
   useEffect(() => {
     // Update document title
@@ -55,8 +83,14 @@ const Builder = () => {
               content: `I'll help you build a fully functional ${appData.appName} app. Here's my development plan:
 
 1. **App Concept & Requirements Analysis**
-   - Core features: ${appData.features.map(feature => `\n   - ${typeof feature === 'object' ? (feature?.name || JSON.stringify(feature || {})) : (feature || '')}`).join('')}
-   - Target users: ${appData.description.includes('for') ? appData.description.split('for')[1].trim() : 'Mobile app users'}
+   - Core features: ${appData.features.map(feature => 
+     `\n   - ${typeof feature === 'object' 
+       ? (feature?.name || JSON.stringify(feature || {})) 
+       : (feature || '')}`
+   ).join('')}
+   - Target users: ${appData.description.includes('for') 
+     ? appData.description.split('for')[1].trim() 
+     : 'Mobile app users'}
 
 2. **Technical Architecture**
    - React Native with Expo for cross-platform development
@@ -118,94 +152,133 @@ Let's start by setting up the project structure and implementing the core featur
         { role: "user", content: text }
       ];
       
-      // Call Gemini API
-      import('@/services/LLMService').then(({ callOpenRouter, useLLMModel }) => {
-        const { currentModel } = useLLMModel();
-        callOpenRouter(aiMessages, currentModel.id)
-          .then(response => {
-            const aiResponse = response.choices[0].message.content;
-            
-            // Add AI response to messages
-            setMessages(prev => [
-              ...prev,
-              { role: 'system', content: aiResponse }
-            ]);
-            
-            setIsLoading(false);
-          })
-          .catch(err => {
-            console.error('Error getting AI response:', err);
-            setMessages(prev => [
-              ...prev,
-              { role: 'system', content: `I'm sorry, I encountered an error: ${err.message}` }
-            ]);
-            setIsLoading(false);
-          });
-      });
+      // Call LLM API with rate limiting
+      setTimeout(() => {
+        import('@/services/LLMService').then(({ callOpenRouter, useLLMModel }) => {
+          const { currentModel } = useLLMModel();
+          callOpenRouter(aiMessages, currentModel.id)
+            .then(response => {
+              const aiResponse = response.choices[0].message.content;
+              
+              // Add AI response to messages
+              setMessages(prev => [
+                ...prev,
+                { role: 'system', content: aiResponse }
+              ]);
+              
+              setIsLoading(false);
+            })
+            .catch(err => {
+              console.error('Error getting AI response:', err);
+              setMessages(prev => [
+                ...prev,
+                { role: 'system', content: `I'm sorry, I encountered an error: ${err.message}` }
+              ]);
+              setIsLoading(false);
+            });
+        });
+      }, 1000); // Add a 1-second delay to avoid API rate limits
     } else {
       // If no app is generated yet, use the message to generate one
-      generateApp(text)
-        .then(appData => {
-          console.log('App generated successfully:', appData.appName);
-          setMessages(prev => {
-            return [
+      setTimeout(() => {
+        generateApp(text)
+          .then(appData => {
+            console.log('App generated successfully:', appData.appName);
+            
+            // After generating the app, let's begin the app creation workflow
+            setMessages(prev => {
+              return [
+                ...prev,
+                { 
+                  role: 'system', 
+                  content: `I'll help you build a ${appData.appName}. Let me first analyze what features we'll need and create a roadmap for development.
+
+I'll start by designing the UI and core screens for your ${appData.appName} app. Here are the key features I'll implement:
+${appData.features ? appData.features.map(feature => 
+  `- ${typeof feature === 'object' ? (feature?.name || JSON.stringify(feature)) : feature}`
+).join('\n') : "Let's define some features!"}`
+                }
+              ];
+            });
+            
+            // Extract screens from the generated code
+            if (appData.previewCode) {
+              const screens = extractScreensFromCode(appData.previewCode);
+              setDetectedScreens(screens);
+            }
+            
+            setIsLoading(false);
+            
+            // Automatically trigger the next step in the workflow after a delay
+            setTimeout(() => {
+              updateAppProgress()
+                .then(() => {
+                  console.log('App progress updated automatically');
+                })
+                .catch(err => {
+                  console.error('Error in automatic update:', err);
+                });
+            }, 5000); // 5-second delay before starting the next step
+          })
+          .catch(err => {
+            console.error('Error generating app:', err);
+            setMessages(prev => [
               ...prev,
               { 
                 role: 'system', 
-                content: `I'll help you build a ${appData.appName}. Let me first analyze what features we'll need and create a roadmap for development. I'll start by setting up the basic structure with React Native and Expo.\n\nHere are the key features I'll implement:\n${appData.features ? appData.features.map(feature => `- ${typeof feature === 'object' ? feature.name || JSON.stringify(feature) : feature}`).join('\n') : "Let's define some features!"}` 
+                content: `I'm sorry, I encountered an error while generating your app: ${err.message}` 
               }
-            ];
+            ]);
+            setIsLoading(false);
           });
-          setIsLoading(false);
-        })
-        .catch(err => {
-          console.error('Error generating app:', err);
-          setMessages(prev => [
-            ...prev,
-            { 
-              role: 'system', 
-              content: `I'm sorry, I encountered an error while generating your app: ${err.message}` 
-            }
-          ]);
-          setIsLoading(false);
-        });
+      }, 1000); // Add a 1-second delay to avoid API rate limits
     }
-  }, [messages, generateApp, generatedApp]);
+  }, [messages, generateApp, generatedApp, extractScreensFromCode, updateAppProgress]);
 
   // Add a function to continue app generation
   const handleContinueGeneration = useCallback(() => {
     if (!generatedApp) return;
     
     setIsLoading(true);
-    updateAppProgress()
-      .then(updatedApp => {
-        if (!updatedApp) return;
-        
-        const currentStep = updatedApp.steps[updatedApp.currentStep - 1];
-        const nextStep = updatedApp.steps[updatedApp.currentStep];
-        
-        setMessages(prev => [
-          ...prev,
-          { 
-            role: 'system', 
-            content: `I've completed the "${currentStep.title}" step. ${currentStep.output || ''}\n\nNow I'm working on "${nextStep?.title || 'finalizing your app'}"...` 
+    
+    // Add a delay to avoid API rate limits
+    setTimeout(() => {
+      updateAppProgress()
+        .then(updatedApp => {
+          if (!updatedApp) return;
+          
+          const currentStep = updatedApp.steps[updatedApp.currentStep - 1];
+          const nextStep = updatedApp.steps[updatedApp.currentStep];
+          
+          setMessages(prev => [
+            ...prev,
+            { 
+              role: 'system', 
+              content: `I've completed the "${currentStep.title}" step. ${currentStep.output || ''}\n\nNow I'm working on "${nextStep?.title || 'finalizing your app'}"...` 
+            }
+          ]);
+          
+          // Extract screens from the updated code
+          if (updatedApp.previewCode) {
+            const screens = extractScreensFromCode(updatedApp.previewCode);
+            setDetectedScreens(screens);
           }
-        ]);
-        
-        setIsLoading(false);
-      })
-      .catch(err => {
-        console.error('Error updating app progress:', err);
-        setMessages(prev => [
-          ...prev,
-          { 
-            role: 'system', 
-            content: `I'm sorry, I encountered an error while updating your app progress: ${err.message}` 
-          }
-        ]);
-        setIsLoading(false);
-      });
-  }, [generatedApp, updateAppProgress]);
+          
+          setIsLoading(false);
+        })
+        .catch(err => {
+          console.error('Error updating app progress:', err);
+          setMessages(prev => [
+            ...prev,
+            { 
+              role: 'system', 
+              content: `I'm sorry, I encountered an error while updating your app progress: ${err.message}` 
+            }
+          ]);
+          setIsLoading(false);
+        });
+    }, 1500); // Add a 1.5-second delay
+  }, [generatedApp, updateAppProgress, extractScreensFromCode]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -245,6 +318,7 @@ Let's start by setting up the project structure and implementing the core featur
                   <MobilePreview 
                     previewCode={generatedApp?.previewCode}
                     qrCodeUrl={generatedApp?.qrCodeUrl}
+                    detectedScreens={detectedScreens}
                   />
                 </div>
                 {generatedApp?.features && generatedApp.features.length > 0 && (
@@ -252,11 +326,11 @@ Let's start by setting up the project structure and implementing the core featur
                     <ErrorBoundary fallback={<div className="p-4">Unable to display features</div>}>
                       <FeatureShowcase 
                         features={generatedApp.features} 
-                        appName={generatedApp.appName}
-                        onFeatureClick={(feature) => {
+                        appName={generatedApp.appName || ""}
+                        onFeatureClick={(featureName) => {
                           // Add feature to the chat as a suggestion
-                          if (feature) {
-                            handleMessageSent(`Can you tell me more about the ${feature} feature?`);
+                          if (featureName) {
+                            handleMessageSent(`Can you tell me more about the ${featureName} feature?`);
                           }
                         }}
                       />
@@ -274,6 +348,10 @@ Let's start by setting up the project structure and implementing the core featur
                       previewCode: newCode 
                     };
                     setGeneratedApp(updatedApp);
+                    
+                    // Update detected screens when code changes
+                    const screens = extractScreensFromCode(newCode);
+                    setDetectedScreens(screens);
                   }
                 }}
               />
