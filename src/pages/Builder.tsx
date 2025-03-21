@@ -55,7 +55,7 @@ const Builder = () => {
               content: `I'll help you build a fully functional ${appData.appName} app. Here's my development plan:
 
 1. **App Concept & Requirements Analysis**
-   - Core features: ${appData.features.map(feature => `\n   - ${typeof feature === 'object' ? feature.name || JSON.stringify(feature || {}) : (feature || '')}`).join('')}
+   - Core features: ${appData.features.map(feature => `\n   - ${typeof feature === 'object' ? (feature?.name || JSON.stringify(feature || {})) : (feature || '')}`).join('')}
    - Target users: ${appData.description.includes('for') ? appData.description.split('for')[1].trim() : 'Mobile app users'}
 
 2. **Technical Architecture**
@@ -112,7 +112,7 @@ Let's start by setting up the project structure and implementing the core featur
       const aiMessages = [
         { 
           role: "system", 
-          content: `You are WingPilot, an AI assistant that helps users build mobile apps. The user is building an app called "${generatedApp.appName}" with the description: "${generatedApp.description}". The app has these features: ${generatedApp.features ? generatedApp.features.join(", ") : "No features specified yet"}. Provide helpful, concise responses to their questions about app development.` 
+          content: `You are WingPilot, an AI assistant that helps users build mobile apps. The user is building an app called "${generatedApp.appName}" with the description: "${generatedApp.description}". The app has these features: ${generatedApp.features ? generatedApp.features.map(f => typeof f === 'object' ? (f?.name || JSON.stringify(f || {})) : (f || '')).join(", ") : "No features specified yet"}. Provide helpful, concise responses to their questions about app development.` 
         },
         ...messages.map(m => ({ role: m.role === 'system' ? 'assistant' : m.role, content: m.content })),
         { role: "user", content: text }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Check, Smartphone, ExternalLink } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -217,10 +218,10 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
     <div className="bg-background">
       <div className="flex flex-1 w-full">
         <div className="w-full flex flex-col">
-          {/* Platform and device selection in a single row */}
-          <div className="px-4 mb-4 flex items-center justify-between">
-            {/* Platform selector - left aligned */}
-            <div className="flex space-x-2 p-1 bg-white/5 rounded-md">
+          {/* Platform selection and device info in a single column */}
+          <div className="px-4 mb-4 flex flex-col space-y-3">
+            {/* Platform selector */}
+            <div className="flex space-x-2 p-1 bg-white/5 rounded-md self-start">
               <button 
                 className={`px-4 py-1.5 rounded-sm text-xs font-medium ${selectedOS === 'ios' ? 'bg-white/10' : 'text-white/60'}`}
                 onClick={() => handleOSChange('ios')}
@@ -235,13 +236,13 @@ const MobilePreview: React.FC<MobilePreviewProps> = ({ qrCodeUrl, previewCode })
               </button>
             </div>
             
-            {/* Device selection - right aligned */}
-            <div className="flex-shrink-0 w-48">
+            {/* Device selection - moved below the OS toggle */}
+            <div className="flex-shrink-0 self-start">
               <Select
                 value={selectedPhoneModel}
                 onValueChange={setSelectedPhoneModel}
               >
-                <SelectTrigger className="bg-white/5 border-0 text-sm">
+                <SelectTrigger className="bg-white/5 border-0 text-sm w-[180px]">
                   <SelectValue placeholder="Select a device" />
                 </SelectTrigger>
                 <SelectContent>

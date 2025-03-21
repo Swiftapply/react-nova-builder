@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 
 // Gemini API response types
@@ -18,10 +19,21 @@ export interface GeminiResponse {
   };
 }
 
-export type LLMModelType = 'gemini-2.0-flash-001' | 'gemini-pro-vision' | 'gemini-ultra';
+export type LLMModelType = 
+  | 'gemini-2.0-flash-001' 
+  | 'gemini-pro-vision' 
+  | 'gemini-ultra'
+  | 'mistral-codestral-2501';
 
-// Updated model definitions with Gemini models only
+// Updated model definitions with Gemini and Mistral models
 export const llmModels = [
+  {
+    id: 'mistral-codestral-2501' as LLMModelType,
+    name: 'Mistral Codestral 2501',
+    provider: 'Mistral',
+    description: 'Specialized code generation model with advanced reasoning capabilities',
+    apiVersion: 'v1'
+  },
   {
     id: 'gemini-2.0-flash-001' as LLMModelType,
     name: 'Gemini 2.0 Flash',
@@ -125,32 +137,93 @@ export const callGeminiAPI = async (
   }
 };
 
+// Function to call Mistral API
+export const callMistralAPI = async (
+  messages: Array<{ role: string; content: string }>,
+  modelId: string
+): Promise<any> => {
+  const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY || '';
+  
+  if (!MISTRAL_API_KEY) {
+    throw new Error('Mistral API key is not configured');
+  }
+
+  try {
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${MISTRAL_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: modelId,
+        messages: messages.map(msg => ({
+          role: msg.role === 'system' ? 'assistant' : msg.role,
+          content: msg.content
+        })),
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Mistral API error: ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error calling Mistral API:', error);
+    throw new Error(`Mistral API error: ${error.message}`);
+  }
+};
+
 // Function to maintain compatibility with existing code that uses OpenRouter format
 export const callOpenRouter = async (
   messages: Array<{ role: string; content: string }>,
   modelId: string
 ): Promise<any> => {
-  // Call Gemini API
-  const geminiResponse = await callGeminiAPI(messages, modelId);
-  
-  // Convert Gemini response to OpenRouter format for compatibility
-  return {
-    id: 'gemini-response-' + Date.now(),
-    choices: [{
-      message: {
-        content: geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '',
-        role: 'assistant'
-      },
-      index: 0,
-      finish_reason: geminiResponse.candidates?.[0]?.finishReason || 'stop'
-    }],
-    model: modelId
-  };
+  // Determine which API to call based on the model ID
+  if (modelId.startsWith('mistral')) {
+    const mistralResponse = await callMistralAPI(messages, modelId);
+    
+    // Convert Mistral response to OpenRouter format for compatibility
+    return {
+      id: 'mistral-response-' + Date.now(),
+      choices: [{
+        message: {
+          content: mistralResponse.choices?.[0]?.message?.content || '',
+          role: 'assistant'
+        },
+        index: 0,
+        finish_reason: mistralResponse.choices?.[0]?.finish_reason || 'stop'
+      }],
+      model: modelId
+    };
+  } else {
+    // Call Gemini API for Google models
+    const geminiResponse = await callGeminiAPI(messages, modelId);
+    
+    // Convert Gemini response to OpenRouter format for compatibility
+    return {
+      id: 'gemini-response-' + Date.now(),
+      choices: [{
+        message: {
+          content: geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '',
+          role: 'assistant'
+        },
+        index: 0,
+        finish_reason: geminiResponse.candidates?.[0]?.finishReason || 'stop'
+      }],
+      model: modelId
+    };
+  }
 };
 
 // Hook to manage the selected LLM model
 export const useLLMModel = () => {
-  const [selectedModel, setSelectedModel] = useState<LLMModelType>('gemini-2.0-flash-001');
+  const [selectedModel, setSelectedModel] = useState<LLMModelType>('mistral-codestral-2501');
 
   const selectModel = (modelId: LLMModelType) => {
     setSelectedModel(modelId);
